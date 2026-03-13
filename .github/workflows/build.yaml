@@ -1,0 +1,48 @@
+name: build
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build app
+        run: |
+          mkdir -p agent/WiFiSnitch.app/Contents/MacOS
+          swiftc -O \
+            -framework Cocoa \
+            -framework CoreLocation \
+            -framework CoreWLAN \
+            agent/WiFiSnitch.swift \
+            -o agent/WiFiSnitch.app/Contents/MacOS/WiFiSnitch
+          chmod +x agent/WiFiSnitch.app/Contents/MacOS/WiFiSnitch
+
+      - name: Build cli
+        run: |
+          swiftc -O cli/wifisnitchctl.swift -o cli/wifisnitchctl
+          chmod +x cli/wifisnitchctl
+
+      - name: Package assets
+        run: |
+          mkdir -p dist
+          ditto -c -k --sequesterRsrc --keepParent agent/WiFiSnitch.app dist/WiFiSnitch.app.zip
+          cp cli/wifisnitchctl dist/wifisnitchctl
+          cp launchd/local.sketchyssid.app.plist dist/local.sketchyssid.app.plist
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/WiFiSnitch.app.zip \
+            dist/wifisnitchctl \
+            dist/local.sketchyssid.app.plist \
+            --generate-notes

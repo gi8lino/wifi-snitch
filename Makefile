@@ -1,84 +1,160 @@
 APP_NAME := WiFiSnitch
-APP_TARGET := .build/release/WiFiSnitchAgent
-CLI_TARGET := .build/release/wifisnitchctl
-APP_BUNDLE := dist/$(APP_NAME).app
-APP_BIN := $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
-CLI_BIN := dist/wifisnitchctl
-PLIST := $(APP_BUNDLE)/Contents/Info.plist
+APP_EXEC := WiFiSnitch
+AGENT_PRODUCT := WiFiSnitchAgent
+CLI_PRODUCT := wifisnitchctl
+
+DIST_DIR := dist
+APP_BUNDLE := $(DIST_DIR)/$(APP_NAME).app
+APP_CONTENTS := $(APP_BUNDLE)/Contents
+APP_MACOS := $(APP_CONTENTS)/MacOS
+APP_RESOURCES := $(APP_CONTENTS)/Resources
+APP_BIN := $(APP_MACOS)/$(APP_EXEC)
+CLI_BIN := $(DIST_DIR)/$(CLI_PRODUCT)
+PLIST_TEMPLATE := packaging/Info.plist
+PLIST := $(APP_CONTENTS)/Info.plist
+
+BUILD_INFO := shared/BuildInfo.swift
+
+BUNDLE_ID ?= com.example.WiFiSnitch
+VERSION ?= dev
+ARCH ?= universal
 
 VERSION_PREFIX ?= v
 LATEST_TAG := $(shell git tag --list '$(VERSION_PREFIX)*' --sort=-v:refname | head -n 1)
-VERSION := $(shell if [ -n "$(LATEST_TAG)" ]; then printf '%s\n' "$(LATEST_TAG)" | sed 's/^$(VERSION_PREFIX)//'; else printf '%s\n' '0.0.0'; fi)
+CURRENT_VERSION := $(if $(LATEST_TAG),$(patsubst $(VERSION_PREFIX)%,%,$(LATEST_TAG)),0.0.0)
 
-.PHONY: prepare-version build app cli bundle run clean patch minor major tag push help
+NEXT_PATCH := $(shell python3 -c 'm,n,p=map(int,"$(CURRENT_VERSION)".split(".")); print(f"{m}.{n}.{p+1}")')
+NEXT_MINOR := $(shell python3 -c 'm,n,p=map(int,"$(CURRENT_VERSION)".split(".")); print(f"{m}.{n+1}.0")')
+NEXT_MAJOR := $(shell python3 -c 'm,n,p=map(int,"$(CURRENT_VERSION)".split(".")); print(f"{m+1}.0.0")')
+
+SWIFT_BUILD := swift build -c release
+
+ifeq ($(ARCH),universal)
+ARCHES := arm64 x86_64
+else ifeq ($(ARCH),arm64)
+ARCHES := arm64
+else ifeq ($(ARCH),x86_64)
+ARCHES := x86_64
+else
+$(error Unsupported ARCH '$(ARCH)'. Use arm64, x86_64, or universal)
+endif
+
+.DEFAULT_GOAL := help
+
+.PHONY: help all prepare-version build bundle package agent cli clean clean-dist run \
+        build-agent build-cli verify stamp-plist \
+        print-arch print-version print-latest-tag \
+        tag-patch tag-minor tag-major push-tags
+
+help: ## Display this help.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Build
 
-prepare-version:
-	@printf '%s\n' 'import Foundation' > shared/BuildInfo.swift
-	@printf '%s\n' '' >> shared/BuildInfo.swift
-	@printf '%s\n' '/// Build-time version information shared by the app and CLI.' >> shared/BuildInfo.swift
-	@printf '%s\n' 'public enum BuildInfo {' >> shared/BuildInfo.swift
-	@printf '%s\n' '    /// The application version embedded at build time.' >> shared/BuildInfo.swift
-	@printf '%s\n' '    public static let appVersion = "$(VERSION)"' >> shared/BuildInfo.swift
-	@printf '%s\n' '}' >> shared/BuildInfo.swift
+all: build ## Build the default artifacts.
 
-build: prepare-version
-	swift build -c release
+prepare-version: ## Generate shared/BuildInfo.swift with the selected VERSION.
+	@printf '%s\n' 'import Foundation' > "$(BUILD_INFO)"
+	@printf '\n' >> "$(BUILD_INFO)"
+	@printf '%s\n' '/// Build-time version information shared by the app and CLI.' >> "$(BUILD_INFO)"
+	@printf '%s\n' 'public enum BuildInfo {' >> "$(BUILD_INFO)"
+	@printf '%s\n' '    /// The application version embedded at build time.' >> "$(BUILD_INFO)"
+	@printf '%s\n' '    public static let appVersion = "$(VERSION)"' >> "$(BUILD_INFO)"
+	@printf '%s\n' '}' >> "$(BUILD_INFO)"
 
-app: build
+build: bundle ## Build the app bundle and CLI for the selected ARCH.
 
-cli: build
+agent: prepare-version ## Build only the app executable for the selected ARCH.
+	@$(MAKE) --no-print-directory build-agent ARCH=$(ARCH) VERSION=$(VERSION)
 
-bundle: build
-	mkdir -p $(APP_BUNDLE)/Contents/MacOS
-	cp $(APP_TARGET) $(APP_BIN)
-	chmod +x $(APP_BIN)
-	/usr/bin/plutil -create xml1 $(PLIST)
-	/usr/bin/plutil -replace CFBundleName -string $(APP_NAME) $(PLIST)
-	/usr/bin/plutil -replace CFBundleDisplayName -string $(APP_NAME) $(PLIST)
-	/usr/bin/plutil -replace CFBundleIdentifier -string com.example.wifisnitch $(PLIST)
-	/usr/bin/plutil -replace CFBundleVersion -string $(VERSION) $(PLIST)
-	/usr/bin/plutil -replace CFBundleShortVersionString -string $(VERSION) $(PLIST)
-	/usr/bin/plutil -replace CFBundleExecutable -string $(APP_NAME) $(PLIST)
-	/usr/bin/plutil -replace CFPackageType -string APPL $(PLIST)
-	/usr/bin/plutil -replace LSUIElement -bool YES $(PLIST)
-	/usr/bin/plutil -replace NSLocationWhenInUseUsageDescription -string "WiFiSnitch needs location access to read the current Wi-Fi SSID." $(PLIST)
+cli: prepare-version ## Build only the CLI executable for the selected ARCH.
+	@$(MAKE) --no-print-directory build-cli ARCH=$(ARCH) VERSION=$(VERSION)
 
-	cp $(CLI_TARGET) $(CLI_BIN)
-	chmod +x $(CLI_BIN)
+bundle: prepare-version clean-dist ## Build the .app bundle and CLI into dist/.
+	@mkdir -p "$(APP_MACOS)" "$(APP_RESOURCES)" "$(DIST_DIR)"
+	@$(MAKE) --no-print-directory build-agent ARCH=$(ARCH) VERSION=$(VERSION)
+	@$(MAKE) --no-print-directory build-cli ARCH=$(ARCH) VERSION=$(VERSION)
+	@cp "$(PLIST_TEMPLATE)" "$(PLIST)"
+	@$(MAKE) --no-print-directory stamp-plist VERSION=$(VERSION) BUNDLE_ID=$(BUNDLE_ID)
+	@chmod +x "$(APP_BIN)" "$(CLI_BIN)"
+	@$(MAKE) --no-print-directory verify
 
-run: bundle
-	open $(APP_BUNDLE)
+package: bundle ## Create dist/WiFiSnitch.app.zip.
+	@ditto -c -k --sequesterRsrc --keepParent "$(APP_BUNDLE)" "$(APP_BUNDLE).zip"
+	@echo "Created $(APP_BUNDLE).zip"
 
-clean:
-	rm -rf .build dist
+build-agent: ## Internal target: build the app executable for ARCH.
+ifeq ($(ARCH),universal)
+	@$(SWIFT_BUILD) --arch arm64 --product $(AGENT_PRODUCT)
+	@$(SWIFT_BUILD) --arch x86_64 --product $(AGENT_PRODUCT)
+	@lipo -create \
+		".build/arm64-apple-macosx/release/$(AGENT_PRODUCT)" \
+		".build/x86_64-apple-macosx/release/$(AGENT_PRODUCT)" \
+		-output "$(APP_BIN)"
+else
+	@$(SWIFT_BUILD) --arch $(ARCH) --product $(AGENT_PRODUCT)
+	@cp ".build/$(ARCH)-apple-macosx/release/$(AGENT_PRODUCT)" "$(APP_BIN)"
+endif
+
+build-cli: ## Internal target: build the CLI executable for ARCH.
+ifeq ($(ARCH),universal)
+	@$(SWIFT_BUILD) --arch arm64 --product $(CLI_PRODUCT)
+	@$(SWIFT_BUILD) --arch x86_64 --product $(CLI_PRODUCT)
+	@lipo -create \
+		".build/arm64-apple-macosx/release/$(CLI_PRODUCT)" \
+		".build/x86_64-apple-macosx/release/$(CLI_PRODUCT)" \
+		-output "$(CLI_BIN)"
+else
+	@$(SWIFT_BUILD) --arch $(ARCH) --product $(CLI_PRODUCT)
+	@cp ".build/$(ARCH)-apple-macosx/release/$(CLI_PRODUCT)" "$(CLI_BIN)"
+endif
+
+stamp-plist: ## Internal target: stamp version and bundle ID into Info.plist.
+	@/usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier $(BUNDLE_ID)' "$(PLIST)"
+	@/usr/libexec/PlistBuddy -c 'Set :CFBundleShortVersionString $(VERSION)' "$(PLIST)"
+	@/usr/libexec/PlistBuddy -c 'Set :CFBundleVersion $(VERSION)' "$(PLIST)"
+
+verify: ## Show the built binary architectures.
+	@echo "Built $(ARCH) artifacts:"
+	@file "$(APP_BIN)"
+	@file "$(CLI_BIN)"
+
+run: bundle ## Build and open the app bundle.
+	@open "$(APP_BUNDLE)"
+
+##@ Cleanup
+
+clean-dist: ## Remove dist/.
+	@rm -rf "$(DIST_DIR)"
+
+clean: ## Remove dist/, .build, and generated BuildInfo.swift.
+	@rm -rf "$(DIST_DIR)" ".build"
+	@rm -f "$(BUILD_INFO)"
+
+##@ Info
+
+print-arch: ## Print the selected ARCH.
+	@echo "$(ARCH)"
+
+print-version: ## Print the current version derived from the latest tag.
+	@echo "$(CURRENT_VERSION)"
+
+print-latest-tag: ## Print the latest matching git tag.
+	@echo "$(LATEST_TAG)"
 
 ##@ Tagging
 
-patch: ## Create a new patch release (x.y.Z+1)
-	@NEW_VERSION=$$(printf '%s\n' "$(VERSION)" | awk -F. '{printf "%d.%d.%d", $$1, $$2, $$3+1}') && \
-	git tag "$(VERSION_PREFIX)$${NEW_VERSION}" && \
-	echo "Tagged $(VERSION_PREFIX)$${NEW_VERSION}"
+tag-patch: ## Create the next patch tag locally.
+	@git tag -a "$(VERSION_PREFIX)$(NEXT_PATCH)" -m "Release $(VERSION_PREFIX)$(NEXT_PATCH)"
+	@echo "Created tag $(VERSION_PREFIX)$(NEXT_PATCH)"
 
-minor: ## Create a new minor release (x.Y+1.0)
-	@NEW_VERSION=$$(printf '%s\n' "$(VERSION)" | awk -F. '{printf "%d.%d.0", $$1, $$2+1}') && \
-	git tag "$(VERSION_PREFIX)$${NEW_VERSION}" && \
-	echo "Tagged $(VERSION_PREFIX)$${NEW_VERSION}"
+tag-minor: ## Create the next minor tag locally.
+	@git tag -a "$(VERSION_PREFIX)$(NEXT_MINOR)" -m "Release $(VERSION_PREFIX)$(NEXT_MINOR)"
+	@echo "Created tag $(VERSION_PREFIX)$(NEXT_MINOR)"
 
-major: ## Create a new major release (X+1.0.0)
-	@NEW_VERSION=$$(printf '%s\n' "$(VERSION)" | awk -F. '{printf "%d.0.0", $$1+1}') && \
-	git tag "$(VERSION_PREFIX)$${NEW_VERSION}" && \
-	echo "Tagged $(VERSION_PREFIX)$${NEW_VERSION}"
+tag-major: ## Create the next major tag locally.
+	@git tag -a "$(VERSION_PREFIX)$(NEXT_MAJOR)" -m "Release $(VERSION_PREFIX)$(NEXT_MAJOR)"
+	@echo "Created tag $(VERSION_PREFIX)$(NEXT_MAJOR)"
 
-tag: ## Show latest tag
-	@echo "Latest tag: $(LATEST_TAG)"
-	@echo "Version: $(VERSION)"
-
-push: ## Push tags to remote
-	git push --tags
-
-##@ General
-
-help: ## Display this help.
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+push-tags: ## Push commits and tags to origin.
+	@git push --follow-tags

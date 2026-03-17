@@ -12,11 +12,19 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
-      - name: Build release artifacts
+      - name: Build universal release artifacts
         run: |
-          make bundle VERSION="${GITHUB_REF_NAME}"
+          make bundle ARCH=universal VERSION="${GITHUB_REF_NAME}"
+
+      - name: Verify artifacts
+        run: |
+          file dist/WiFiSnitch.app/Contents/MacOS/WiFiSnitch
+          file dist/wifisnitchctl
 
       - name: Package assets
         run: |

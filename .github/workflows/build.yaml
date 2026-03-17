@@ -14,28 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Build app
+      - name: Build release artifacts
         run: |
-          mkdir -p agent/WiFiSnitch.app/Contents/MacOS
-          swiftc agent/*.swift \
-            -o agent/WiFiSnitch.app/Contents/MacOS/WiFiSnitch \
-            -framework Cocoa \
-            -framework CoreLocation \
-            -framework CoreWLAN \
-            -framework SystemConfiguration
-          chmod +x agent/WiFiSnitch.app/Contents/MacOS/WiFiSnitch
-
-      - name: Build cli
-        run: |
-          swiftc -O cli/wifisnitchctl.swift -o cli/wifisnitchctl
-          chmod +x cli/wifisnitchctl
+          make bundle
 
       - name: Package assets
         run: |
           mkdir -p dist
-          ditto -c -k --sequesterRsrc --keepParent agent/WiFiSnitch.app dist/WiFiSnitch.app.zip
-          cp cli/wifisnitchctl dist/wifisnitchctl
-          cp launchd/io.github.gi8lino.wifisnitch.plist dist/io.github.gi8lino.wifisnitch.plist
+          ditto -c -k --sequesterRsrc --keepParent dist/WiFiSnitch.app dist/WiFiSnitch.app.zip
 
       - name: Create release
         env:
@@ -44,5 +30,4 @@ jobs:
           gh release create "${GITHUB_REF_NAME}" \
             dist/WiFiSnitch.app.zip \
             dist/wifisnitchctl \
-            dist/io.github.gi8lino.wifisnitch.plist \
             --generate-notes

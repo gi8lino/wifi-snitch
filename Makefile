@@ -15,7 +15,7 @@ PLIST := $(APP_CONTENTS)/Info.plist
 
 BUILD_INFO := shared/BuildInfo.swift
 
-BUNDLE_ID ?= com.example.WiFiSnitch
+BUNDLE_ID ?= io.github.gi8lino.wifisnitch
 VERSION ?= dev
 ARCH ?= universal
 

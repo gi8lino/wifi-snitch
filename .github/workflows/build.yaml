@@ -16,7 +16,7 @@ jobs:
 
       - name: Build release artifacts
         run: |
-          make bundle
+          make bundle VERSION="${GITHUB_REF_NAME}"
 
       - name: Package assets
         run: |

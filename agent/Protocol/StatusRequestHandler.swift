@@ -9,7 +9,7 @@ struct StatusRequestHandler {
     private let encoder: StatusFieldEncoder
 
     private let protocolVersion = "1"
-    private let appVersion = "1.0.0"
+    private let appVersion = BuildInfo.appVersion
 
     /// Creates a request handler with all providers.
     init(

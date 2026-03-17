@@ -1,65 +1,40 @@
-APP_BIN=agent/WiFiSnitch.app/Contents/MacOS/WiFiSnitch
-CLI_BIN=cli/wifisnitchctl
-AGENT_SRC=$(wildcard agent/*.swift)
-CLI_SRC=cli/wifisnitchctl.swift
+APP_NAME=WiFiSnitch
+APP_TARGET=.build/release/WiFiSnitchAgent
+CLI_TARGET=.build/release/wifisnitchctl
+APP_BUNDLE=dist/$(APP_NAME).app
+APP_BIN=$(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
+CLI_BIN=dist/wifisnitchctl
+PLIST=$(APP_BUNDLE)/Contents/Info.plist
 
-.PHONY: build app cli clean run install
+.PHONY: build app cli bundle run clean
 
-build: app cli
+build:
+	swift build -c release
 
-app:
-	mkdir -p agent/WiFiSnitch.app/Contents/MacOS
-	swiftc $(AGENT_SRC) \
-		-o $(APP_BIN) \
-		-framework Cocoa \
-		-framework CoreLocation \
-		-framework CoreWLAN \
-		-framework SystemConfiguration
+app: build
+
+cli: build
+
+bundle: build
+	mkdir -p $(APP_BUNDLE)/Contents/MacOS
+	cp $(APP_TARGET) $(APP_BIN)
 	chmod +x $(APP_BIN)
+	/usr/bin/plutil -create xml1 $(PLIST)
+	/usr/bin/plutil -replace CFBundleName -string $(APP_NAME) $(PLIST)
+	/usr/bin/plutil -replace CFBundleDisplayName -string $(APP_NAME) $(PLIST)
+	/usr/bin/plutil -replace CFBundleIdentifier -string com.example.wifisnitch $(PLIST)
+	/usr/bin/plutil -replace CFBundleVersion -string 1.0.0 $(PLIST)
+	/usr/bin/plutil -replace CFBundleShortVersionString -string 1.0.0 $(PLIST)
+	/usr/bin/plutil -replace CFBundleExecutable -string $(APP_NAME) $(PLIST)
+	/usr/bin/plutil -replace CFPackageType -string APPL $(PLIST)
+	/usr/bin/plutil -replace LSUIElement -bool YES $(PLIST)
+	/usr/bin/plutil -replace NSLocationWhenInUseUsageDescription -string "WiFiSnitch needs location access to read the current Wi-Fi SSID." $(PLIST)
 
-cli:
-	swiftc -O $(CLI_SRC) -o $(CLI_BIN)
+	cp $(CLI_TARGET) $(CLI_BIN)
 	chmod +x $(CLI_BIN)
 
-run: build
-	open agent/WiFiSnitch.app
-
-install: build
-	sudo cp -r agent/WiFiSnitch.app /Applications
-	pkill -x WiFiSnitch || true
-	open /Applications/WiFiSnitch.app
+run: bundle
+	open $(APP_BUNDLE)
 
 clean:
-	rm -f $(APP_BIN)
-	rm -f $(CLI_BIN)
-
-# Default: no prefix. Can be overridden via `make patch VERSION_PREFIX=v`
-VERSION_PREFIX ?= v
-
-##@ Tagging
-
-# Find the latest tag (with prefix filter if defined, default to 0.0.0 if none found)
-# Lazy evaluation ensures fresh values on every run
-LATEST_TAG = $(shell git tag --list "$(VERSION_PREFIX)*" --sort=-v:refname | head -n 1)
-VERSION = $(shell [ -n "$(LATEST_TAG)" ] && echo "$(LATEST_TAG)" | sed 's/^$(VERSION_PREFIX)//' || echo "0.0.0")
-
-patch: ## Create a new patch release (x.y.Z+1)
-	@NEW_VERSION=$$(echo "$(VERSION)" | awk -F. '{printf "%d.%d.%d", $$1, $$2, $$3+1}') && \
-	git tag "$(VERSION_PREFIX)$${NEW_VERSION}" && \
-	echo "Tagged $(VERSION_PREFIX)$${NEW_VERSION}"
-
-minor: ## Create a new minor release (x.Y+1.0)
-	@NEW_VERSION=$$(echo "$(VERSION)" | awk -F. '{printf "%d.%d.0", $$1, $$2+1}') && \
-	git tag "$(VERSION_PREFIX)$${NEW_VERSION}" && \
-	echo "Tagged $(VERSION_PREFIX)$${NEW_VERSION}"
-
-major: ## Create a new major release (X+1.0.0)
-	@NEW_VERSION=$$(echo "$(VERSION)" | awk -F. '{printf "%d.0.0", $$1+1}') && \
-	git tag "$(VERSION_PREFIX)$${NEW_VERSION}" && \
-	echo "Tagged $(VERSION_PREFIX)$${NEW_VERSION}"
-
-tag: ## Show latest tag
-	@echo "Latest version: $(LATEST_TAG)"
-
-push: ## Push tags to remote
-	git push --tags
+	rm -rf .build dist

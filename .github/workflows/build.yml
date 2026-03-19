@@ -31,6 +31,9 @@ jobs:
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
+          echo "Tag: $TAG"
+          echo "Version: $VERSION"
+
       - name: Build universal release artifact
         shell: bash
         run: |

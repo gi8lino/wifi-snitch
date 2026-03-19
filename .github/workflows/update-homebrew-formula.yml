@@ -54,7 +54,7 @@ jobs:
           FORMULA_FILE="homebrew-tap/Formula/wifisnitch.rb"
           mkdir -p "$(dirname "${FORMULA_FILE}")"
 
-          cat > "${FORMULA_FILE}" <<EOF
+          cat > "${FORMULA_FILE}" <<'EOF'
           class Wifisnitch < Formula
             desc "Background macOS Wi-Fi and network status agent with CLI access"
             homepage "https://github.com/gi8lino/wifisnitch"

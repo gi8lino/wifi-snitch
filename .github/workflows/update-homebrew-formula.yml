@@ -72,6 +72,8 @@ jobs:
                 #!/bin/bash
                 exec "#{libexec}/WiFiSnitch.app/Contents/MacOS/WiFiSnitch" "$@"
               SH
+
+              (var/"log/wifisnitch").mkpath
             end
 
             service do
@@ -80,8 +82,8 @@ jobs:
               keep_alive true
               process_type :interactive
               working_dir HOMEBREW_PREFIX
-              log_path var/"log/wifisnitch.log"
-              error_log_path var/"log/wifisnitch.log"
+              log_path var/"log/wifisnitch/wifisnitch.out.log"
+              error_log_path var/"log/wifisnitch/wifisnitch.err.log"
             end
 
             test do

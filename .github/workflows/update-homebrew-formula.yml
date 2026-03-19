@@ -57,8 +57,8 @@ jobs:
           cat > "${FORMULA_FILE}" <<'EOF'
           class Wifisnitch < Formula
             desc "Background macOS Wi-Fi and network status agent with CLI access"
-            homepage "https://github.com/gi8lino/wifisnitch"
-            url "https://github.com/gi8lino/wifisnitch/releases/download/v${{ steps.vars.outputs.version }}/WiFiSnitch-${{ steps.vars.outputs.version }}.zip"
+            homepage "https://github.com/gi8lino/wifi-snitch"
+            url "https://github.com/gi8lino/wifi-snitch/releases/download/v${{ steps.vars.outputs.version }}/WiFiSnitch-${{ steps.vars.outputs.version }}.zip"
             sha256 "${{ steps.sha.outputs.sha }}"
             version "${{ steps.vars.outputs.version }}"
 

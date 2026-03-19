@@ -74,7 +74,7 @@ jobs:
 
               (bin/"wifisnitch").write <<~SH
                 #!/bin/bash
-                exec "#{libexec}/WiFiSnitch.app/Contents/MacOS/WiFiSnitch" "$@"
+                exec "#{libexec}/WiFiSnitch.app/Contents/MacOS/WiFiSnitch" "\$@"
               SH
 
               (var/"log/wifisnitch").mkpath

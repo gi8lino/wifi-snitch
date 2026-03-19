@@ -19,14 +19,13 @@ final class AppController: NSObject, CLLocationManagerDelegate {
 
     private var server: StatusSocketServer?
 
-    /// Starts location tracking, refreshes login item state, and starts the socket server.
+    /// Starts location tracking and starts the socket server.
     @MainActor
     func start() {
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
 
         authState.setStatus(locationManager.authorizationStatus)
-        LoginItemManager.shared.refresh()
 
         server = StatusSocketServer(
             socketPath: defaultSocketPath(),

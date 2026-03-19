@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Starts the agent when the app finishes launching.
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
         controller.start()
     }
 

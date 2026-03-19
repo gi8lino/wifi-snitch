@@ -29,6 +29,12 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 
+	<key>LSUIElement</key>
+	<true/>
+
+	<key>NSLocationUsageDescription</key>
+	<string>WiFiSnitch needs location access to read Wi-Fi network information such as SSID and BSSID.</string>
+
 	<key>NSHighResolutionCapable</key>
 	<true/>
 </dict>

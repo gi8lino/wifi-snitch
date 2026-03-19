@@ -3,18 +3,31 @@ import WiFiSnitchShared
 
 /// Renders the app settings window.
 struct SettingsView: View {
-    @State private var isEnabled = false
-    @State private var statusMessage: String?
-
     var body: some View {
         Form {
-            Toggle("Start at login", isOn: bindingForLoginItem)
+            Text("WiFiSnitch startup is managed by Homebrew.")
+                .font(.headline)
 
-            if let statusMessage, !statusMessage.isEmpty {
-                Text(statusMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
+            Text("Start at login:")
+                .font(.subheadline)
+
+            Text("brew services start wifisnitch")
+                .font(.footnote.monospaced())
+                .textSelection(.enabled)
+
+            Text("Stop:")
+                .font(.subheadline)
+
+            Text("brew services stop wifisnitch")
+                .font(.footnote.monospaced())
+                .textSelection(.enabled)
+
+            Text("Restart:")
+                .font(.subheadline)
+
+            Text("brew services restart wifisnitch")
+                .font(.footnote.monospaced())
+                .textSelection(.enabled)
 
             Text("Socket path")
                 .font(.headline)
@@ -25,36 +38,5 @@ struct SettingsView: View {
         }
         .padding(20)
         .frame(width: 420)
-        .onAppear {
-            refreshLoginItemState()
-        }
-    }
-
-    /// Binds the toggle to the login item manager.
-    private var bindingForLoginItem: Binding<Bool> {
-        Binding(
-            get: { isEnabled },
-            set: { newValue in
-                setLoginItemEnabled(newValue)
-            }
-        )
-    }
-
-    /// Refreshes the cached login item state for the UI.
-    private func refreshLoginItemState() {
-        let manager = LoginItemManager.shared
-        manager.refresh()
-
-        isEnabled = manager.isEnabled
-        statusMessage = manager.statusMessage
-    }
-
-    /// Updates the login item state and refreshes the UI.
-    private func setLoginItemEnabled(_ enabled: Bool) {
-        let manager = LoginItemManager.shared
-        manager.setEnabled(enabled)
-
-        isEnabled = manager.isEnabled
-        statusMessage = manager.statusMessage
     }
 }

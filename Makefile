@@ -13,6 +13,10 @@ CLI_BIN := $(DIST_DIR)/$(CLI_PRODUCT)
 PLIST_TEMPLATE := packaging/Info.plist
 PLIST := $(APP_CONTENTS)/Info.plist
 
+PACKAGE_NAME := $(APP_NAME)-$(VERSION).zip
+PACKAGE_ZIP := $(DIST_DIR)/$(PACKAGE_NAME)
+PACKAGE_STAGE := $(DIST_DIR)/package
+
 BUILD_INFO := shared/BuildInfo.swift
 
 BUNDLE_ID ?= io.github.gi8lino.wifisnitch
@@ -41,13 +45,13 @@ endif
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all prepare-version build bundle package agent cli clean clean-dist run \
-        build-agent build-cli verify stamp-plist \
-        print-arch print-version print-latest-tag \
+.PHONY: help all prepare-version build bundle package release agent cli clean clean-dist run \
+        build-agent build-cli verify stamp-plist sign \
+        print-arch print-version print-latest-tag print-package-sha256 \
         tag-patch tag-minor tag-major push-tags
 
 help: ## Display this help.
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Build
 
@@ -77,11 +81,20 @@ bundle: prepare-version clean-dist ## Build the .app bundle and CLI into dist/.
 	@cp "$(PLIST_TEMPLATE)" "$(PLIST)"
 	@$(MAKE) --no-print-directory stamp-plist VERSION=$(VERSION) BUNDLE_ID=$(BUNDLE_ID)
 	@chmod +x "$(APP_BIN)" "$(CLI_BIN)"
+	@$(MAKE) --no-print-directory sign
 	@$(MAKE) --no-print-directory verify
 
-package: bundle ## Create dist/WiFiSnitch.app.zip.
-	@ditto -c -k --sequesterRsrc --keepParent "$(APP_BUNDLE)" "$(APP_BUNDLE).zip"
-	@echo "Created $(APP_BUNDLE).zip"
+package: bundle ## Create the release ZIP consumed by the Homebrew formula.
+	@rm -rf "$(PACKAGE_STAGE)" "$(PACKAGE_ZIP)"
+	@mkdir -p "$(PACKAGE_STAGE)"
+	@cp -R "$(APP_BUNDLE)" "$(PACKAGE_STAGE)/WiFiSnitch.app"
+	@cp "$(CLI_BIN)" "$(PACKAGE_STAGE)/wifisnitchctl"
+	@cd "$(PACKAGE_STAGE)" && zip -qry "../$(PACKAGE_NAME)" "WiFiSnitch.app" "wifisnitchctl"
+	@rm -rf "$(PACKAGE_STAGE)"
+	@echo "Created $(PACKAGE_ZIP)"
+
+release: package ## Build the zipped release artifact.
+	@echo "Release artifact ready: $(PACKAGE_ZIP)"
 
 build-agent: ## Internal target: build the app executable for ARCH.
 ifeq ($(ARCH),universal)
@@ -113,11 +126,20 @@ stamp-plist: ## Internal target: stamp version and bundle ID into Info.plist.
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier $(BUNDLE_ID)' "$(PLIST)"
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleShortVersionString $(VERSION)' "$(PLIST)"
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleVersion $(VERSION)' "$(PLIST)"
+	@/usr/libexec/PlistBuddy -c 'Set :CFBundleExecutable $(APP_EXEC)' "$(PLIST)"
+	@/usr/libexec/PlistBuddy -c 'Set :CFBundleName $(APP_NAME)' "$(PLIST)" >/dev/null 2>&1 || true
+
+sign: ## Ad-hoc sign the bundle for local launching.
+	@codesign --force --deep --sign - "$(APP_BUNDLE)" >/dev/null 2>&1 || true
 
 verify: ## Show the built binary architectures.
 	@echo "Built $(ARCH) artifacts:"
 	@file "$(APP_BIN)"
 	@file "$(CLI_BIN)"
+	@echo "Packaged app root:"
+	@ls -1 "$(APP_BUNDLE)"
+	@echo "Packaged Contents:"
+	@ls -1 "$(APP_CONTENTS)"
 
 run: bundle ## Build and open the app bundle.
 	@open "$(APP_BUNDLE)"
@@ -141,6 +163,9 @@ print-version: ## Print the current version derived from the latest tag.
 
 print-latest-tag: ## Print the latest matching git tag.
 	@echo "$(LATEST_TAG)"
+
+print-package-sha256: package ## Print the SHA-256 of the packaged zip.
+	@shasum -a 256 "$(PACKAGE_ZIP)"
 
 ##@ Tagging
 

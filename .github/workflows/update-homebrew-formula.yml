@@ -63,8 +63,8 @@ jobs:
             homepage "https://github.com/gi8lino/wifi-snitch"
             url "https://github.com/gi8lino/wifi-snitch/releases/download/v#{version}/WiFiSnitch-#{version}/.zip"
             sha256 "${SHA}"
+            license "Apache-2.0"
             version "${VERSION}"
-
 
             depends_on macos: :sonoma
 

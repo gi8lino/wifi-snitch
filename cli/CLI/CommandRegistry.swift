@@ -3,20 +3,47 @@ import Foundation
 struct CommandSpec {
     let name: String
     let request: String
-    let allowsFormat: Bool
     let help: String
+    let allowsFormat: Bool
+    let allowsTextFormat: Bool
+    let example: String?
+
+    /// Returns the generated usage suffix for this command.
+    var usageSuffix: String {
+        guard allowsFormat else {
+            return ""
+        }
+
+        let formatValues = allowsTextFormat ? "text|json|lines" : "json|lines"
+        return "[--format=\(formatValues)]"
+    }
+
+    /// Returns the generated usage line for this command.
+    var usageLine: String {
+        let suffix = usageSuffix
+        return suffix.isEmpty ? "  wifisnitchctl \(name)" : "  wifisnitchctl \(name) \(suffix)"
+    }
 }
 
 let commandRegistry: [CommandSpec] = [
-    .init(name: "ssid", request: "GET_SSID", allowsFormat: false, help: "Print the current SSID"),
-    .init(name: "status", request: "GET_STATUS", allowsFormat: true, help: "Print full status"),
-    .init(name: "wifi", request: "GET_WIFI", allowsFormat: false, help: "Print Wi-Fi payload"),
-    .init(name: "network", request: "GET_NETWORK", allowsFormat: false, help: "Print network payload"),
-    .init(name: "auth", request: "GET_AUTH", allowsFormat: false, help: "Print auth payload"),
-    .init(name: "signal", request: "GET_SIGNAL", allowsFormat: false, help: "Print signal payload"),
-    .init(name: "debug", request: "GET_DEBUG", allowsFormat: false, help: "Print debug payload"),
-    .init(name: "ping", request: "PING", allowsFormat: false, help: "Check if the agent is alive"),
-    .init(name: "version", request: "VERSION", allowsFormat: false, help: "Print protocol and app version"),
-    .init(name: "fields", request: "FIELDS", allowsFormat: false, help: "List supported fields"),
-    .init(name: "formats", request: "FORMATS", allowsFormat: false, help: "List supported formats"),
+    .init(name: "ssid", request: "GET_SSID", help: "Print the current SSID", allowsFormat: false, allowsTextFormat: false, example: "wifisnitchctl ssid"),
+    .init(name: "status", request: "GET_STATUS", help: "Print full status", allowsFormat: true, allowsTextFormat: false, example: "wifisnitchctl status --format=lines"),
+    .init(name: "wifi", request: "GET_WIFI", help: "Print Wi-Fi payload", allowsFormat: false, allowsTextFormat: false, example: nil),
+    .init(name: "network", request: "GET_NETWORK", help: "Print network payload", allowsFormat: false, allowsTextFormat: false, example: nil),
+    .init(name: "auth", request: "GET_AUTH", help: "Print auth payload", allowsFormat: false, allowsTextFormat: false, example: nil),
+    .init(name: "signal", request: "GET_SIGNAL", help: "Print signal payload", allowsFormat: false, allowsTextFormat: false, example: nil),
+    .init(name: "debug", request: "GET_DEBUG", help: "Print debug payload", allowsFormat: false, allowsTextFormat: false, example: nil),
+    .init(name: "ping", request: "PING", help: "Check if the agent is alive", allowsFormat: false, allowsTextFormat: false, example: nil),
+    .init(name: "version", request: "VERSION", help: "Print protocol and app version", allowsFormat: false, allowsTextFormat: false, example: nil),
+    .init(name: "fields", request: "FIELDS", help: "List supported fields", allowsFormat: false, allowsTextFormat: false, example: nil),
+    .init(name: "formats", request: "FORMATS", help: "List supported formats", allowsFormat: false, allowsTextFormat: false, example: nil),
 ]
+
+let getCommand = CommandSpec(
+    name: "get <field>[,<field>...]",
+    request: "GET",
+    help: "Print selected fields",
+    allowsFormat: true,
+    allowsTextFormat: true,
+    example: "wifisnitchctl get network.primary_interface_is_tunnel --format=text"
+)

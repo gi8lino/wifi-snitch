@@ -3,12 +3,25 @@ import WiFiSnitchShared
 
 /// Prints the command-line help text.
 func printHelp() {
-    let commandLines = commandRegistry
-        .map { "  wifisnitchctl \($0.name)" + ($0.allowsFormat ? " [--format=json|lines]" : "") }
+    let usageLines = (commandRegistry + [getCommand])
+        .map(\.usageLine)
         .joined(separator: "\n")
 
-    let commandDescriptions = commandRegistry
+    let commandDescriptions = (commandRegistry + [getCommand])
         .map { "  \($0.name.padding(toLength: 10, withPad: " ", startingAt: 0)) \($0.help)" }
+        .joined(separator: "\n")
+
+    let exampleLines = (
+        ["wifisnitchctl"]
+        + commandRegistry.compactMap(\.example)
+        + [getCommand.example].compactMap { $0 }
+        + [
+            "wifisnitchctl get wifi.ssid,wifi.bssid,wifi.channel --format=lines",
+            "wifisnitchctl get wifi.snr,wifi.link_quality --format=lines",
+            "wifisnitchctl get network.primary_interface,network.active_tunnel_interface --format=lines",
+            "wifisnitchctl get network.active_tunnel_interfaces --format=lines",
+        ]
+    ).map { "  \($0)" }
         .joined(separator: "\n")
 
     let help = """
@@ -16,22 +29,13 @@ func printHelp() {
 
     Usage:
       wifisnitchctl [options]
-    \(commandLines)
-      wifisnitchctl get <field>[,<field>...] [--format=text|json|lines]
+    \(usageLines)
 
     Commands:
     \(commandDescriptions)
-      get        Print selected fields
 
     Examples:
-      wifisnitchctl
-      wifisnitchctl ssid
-      wifisnitchctl status --format=lines
-      wifisnitchctl get wifi.ssid,wifi.bssid,wifi.channel --format=lines
-      wifisnitchctl get wifi.snr,wifi.link_quality --format=lines
-      wifisnitchctl get network.primary_interface,network.active_tunnel_interface --format=lines
-      wifisnitchctl get network.primary_interface_is_tunnel --format=text
-      wifisnitchctl get network.active_tunnel_interfaces --format=lines
+    \(exampleLines)
 
     Fields:
       wifi.ssid

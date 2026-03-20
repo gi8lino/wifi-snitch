@@ -49,7 +49,7 @@ func buildRequest(from args: [String]) -> String {
             fail("missing field for get")
         }
 
-        validateFormatArgs(Array(rest.dropFirst()), allowText: true)
+        validateArgs(Array(rest.dropFirst()), command: getCommand)
         return "GET " + rest.joined(separator: " ")
     }
 
@@ -58,7 +58,7 @@ func buildRequest(from args: [String]) -> String {
     }
 
     let rest = Array(args.dropFirst())
-    validateFormatArgs(rest, allowText: false, command: command)
+    validateArgs(rest, command: command)
 
     if rest.isEmpty {
         return command.request
@@ -67,18 +67,22 @@ func buildRequest(from args: [String]) -> String {
     return command.request + " " + rest.joined(separator: " ")
 }
 
-/// Validates optional format arguments.
-func validateFormatArgs(_ args: [String], allowText: Bool, command: CommandSpec? = nil) {
+/// Validates optional request arguments.
+func validateArgs(_ args: [String], command: CommandSpec) {
     for arg in args {
         switch arg {
         case "--format=json", "--format=lines":
-            guard command?.allowsFormat ?? true else {
+            guard command.allowsFormat else {
                 fail("command does not accept format arguments")
             }
 
         case "--format=text":
-            guard allowText else {
-                fail("text format is only supported by get")
+            guard command.allowsFormat else {
+                fail("command does not accept format arguments")
+            }
+
+            guard command.allowsTextFormat else {
+                fail("text format is not supported by this command")
             }
 
         default:

@@ -1,44 +1,9 @@
 import Foundation
+import WiFiSnitchShared
 
 /// Encodes status payloads into protocol responses.
 struct StatusFieldEncoder {
-  let availableFields = [
-    "wifi.ssid",
-    "wifi.bssid",
-    "wifi.interface",
-    "wifi.hardware_address",
-    "wifi.power",
-    "wifi.service_active",
-    "wifi.rssi",
-    "wifi.noise",
-    "wifi.snr",
-    "wifi.link_quality",
-    "wifi.tx_rate",
-    "wifi.channel",
-    "wifi.channel_band",
-    "wifi.channel_width",
-    "wifi.security",
-    "wifi.phy_mode",
-    "wifi.interface_mode",
-    "wifi.country_code",
-    "wifi.roaming",
-    "wifi.ssid_changed_at",
-    "wifi.interface_changed_at",
-
-    "network.primary_interface",
-    "network.active_tunnel_interface",
-    "network.active_tunnel_interfaces",
-    "network.primary_interface_is_tunnel",
-    "network.ipv4_address",
-    "network.ipv6_address",
-    "network.default_gateway",
-    "network.dns_servers",
-    "network.internet_reachable",
-    "network.captive_portal",
-
-    "auth.location_authorized",
-    "auth.location_permission_state",
-  ]
+  private let availableFields = Set(statusFieldRegistry.map(\.name))
 
   /// Flattens the status payload into dot-separated fields.
   func flatten(_ payload: StatusPayload) -> [String: String] {

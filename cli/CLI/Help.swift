@@ -1,87 +1,77 @@
 import Foundation
 import WiFiSnitchShared
 
-/// Prints the command-line help text.
-func printHelp() {
-  let usageLines =
-    commandRegistry
-    .map(\.usageLine)
-    .joined(separator: "\n")
+enum CLI {
+  /// Formats one help row with aligned option text.
+  static func formatOption(_ option: String, _ description: String) -> String {
+    "  " + option.padding(toLength: 32, withPad: " ", startingAt: 0) + description
+  }
 
-  let commandDescriptions =
-    commandRegistry
-    .map { "  \($0.name.padding(toLength: 10, withPad: " ", startingAt: 0)) \($0.help)" }
-    .joined(separator: "\n")
+  /// Prints one plain error line.
+  static func printError(_ message: String) {
+    fputs("wifisnitchctl: \(message)\n", stderr)
+  }
 
-  let exampleLines =
-    (["wifisnitchctl"]
-    + commandRegistry.compactMap(\.example)
-    + [
-      "wifisnitchctl field wifi.ssid,wifi.bssid,wifi.channel --format=lines",
-      "wifisnitchctl field wifi.snr,wifi.link_quality --format=lines",
-      "wifisnitchctl field network.primary_interface,network.active_tunnel_interface --format=lines",
-      "wifisnitchctl field network.active_tunnel_interfaces --format=lines",
-    ]).map { "  \($0)" }
-    .joined(separator: "\n")
+  /// Prints one plain version line.
+  static func printVersion() {
+    fputs("wifisnitchctl \(BuildInfo.appVersion)\n", stdout)
+  }
 
-  let help = """
-    wifisnitchctl
+  /// Prints the command-line help text.
+  static func printUsage() {
+    let usageLines =
+      commandRegistry
+      .map(\.usageLine)
+      .joined(separator: "\n")
 
-    Usage:
-      wifisnitchctl [options]
-    \(usageLines)
+    let commandDescriptions =
+      commandRegistry
+      .map { formatOption($0.name, $0.help) }
+      .joined(separator: "\n")
 
-    Commands:
-    \(commandDescriptions)
+    let exampleLines =
+      (["wifisnitchctl"]
+      + commandRegistry.compactMap(\.example)
+      + [
+        "wifisnitchctl field wifi.ssid,wifi.bssid,wifi.channel --format=lines",
+        "wifisnitchctl field wifi.snr,wifi.link_quality --format=lines",
+        "wifisnitchctl field network.primary_interface,network.active_tunnel_interface --format=lines",
+        "wifisnitchctl field network.active_tunnel_interfaces --format=lines",
+      ]).map { "  \($0)" }
+      .joined(separator: "\n")
 
-    Examples:
-    \(exampleLines)
+    let fieldLines = statusFieldRegistry
+      .map { formatOption($0.name, $0.help) }
+      .joined(separator: "\n")
 
-    Fields:
-      wifi.ssid
-      wifi.bssid
-      wifi.interface
-      wifi.hardware_address
-      wifi.power
-      wifi.service_active
-      wifi.rssi
-      wifi.noise
-      wifi.snr
-      wifi.link_quality
-      wifi.tx_rate
-      wifi.channel
-      wifi.channel_band
-      wifi.channel_width
-      wifi.security
-      wifi.phy_mode
-      wifi.interface_mode
-      wifi.country_code
-      wifi.roaming
-      wifi.ssid_changed_at
-      wifi.interface_changed_at
-      network.primary_interface
-      network.active_tunnel_interface
-      network.active_tunnel_interfaces
-      network.primary_interface_is_tunnel
-      network.ipv4_address
-      network.ipv6_address
-      network.default_gateway
-      network.dns_servers
-      network.internet_reachable
-      network.captive_portal
-      auth.location_authorized
-      auth.location_permission_state
+    let help = """
+      wifisnitchctl
 
-    Options:
-      --socket PATH   Override the socket path
-      --help          Show this help
+      usage:
+        wifisnitchctl [options]
+      \(usageLines)
 
-    Environment:
-      WIFISNITCH_SOCKET   Override the socket path
+      commands:
+      \(commandDescriptions)
 
-    Default socket:
-      \(defaultSocketPath())
-    """
+      examples:
+      \(exampleLines)
 
-  print(help)
+      fields:
+      \(fieldLines)
+
+      options:
+      \(formatOption("--socket, -s <path>", "Override socket path"))
+      \(formatOption("--version, -v", "Show the wifisnitchctl version"))
+      \(formatOption("--help, -h", "Show this help"))
+
+      environment:
+      \(formatOption("WIFISNITCH_SOCKET", "Override socket path"))
+
+      default socket:
+        \(defaultSocketPath())
+      """
+
+    fputs(help + "\n", stderr)
+  }
 }

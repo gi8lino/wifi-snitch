@@ -48,7 +48,7 @@ struct StatusRequestHandler {
       ])
 
     case "fields":
-      return encoder.availableFields.joined(separator: "\n")
+      return statusFieldRegistry.map(\.name).joined(separator: "\n")
 
     case "formats":
       return "text\njson\nlines"

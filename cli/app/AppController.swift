@@ -1,24 +1,31 @@
 import Foundation
 
 final class AppController {
-  /// Parses arguments, sends the request, and returns the process exit code.
+  /// Runs the CLI command flow and returns the process exit code.
   func run() -> Int32 {
-    guard let options = parseArgs() else {
+    do {
+      let parsed = try parseArguments(CommandLine.arguments)
+      try sendCommand(parsed)
       return 0
+    } catch AppError.showUsage {
+      CLI.printUsage()
+      return 1
+    } catch AppError.showVersion {
+      CLI.printVersion()
+      return 0
+    } catch AppError.message(let message) {
+      CLI.printError(message)
+    } catch {
+      CLI.printError("\(error)")
     }
 
-    do {
-      let reply = try SocketClient(socketPath: options.socketPath).send(request: options.request)
-      print(reply, terminator: "")
-      return 0
-    } catch {
-      return exitWithError(error)
-    }
+    CLI.printUsage()
+    return 1
   }
 
-  /// Prints an error and returns a failure code.
-  private func exitWithError(_ error: Error) -> Int32 {
-    fputs("\(error)\n", stderr)
-    return 1
+  /// Sends one request to the socket and prints the reply.
+  private func sendCommand(_ parsed: ParsedArguments) throws {
+    let reply = try SocketClient(socketPath: parsed.socketPath).send(request: parsed.request)
+    print(reply, terminator: "")
   }
 }

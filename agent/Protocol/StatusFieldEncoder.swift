@@ -6,7 +6,9 @@ struct StatusFieldEncoder {
     "wifi.ssid",
     "wifi.bssid",
     "wifi.interface",
+    "wifi.hardware_address",
     "wifi.power",
+    "wifi.service_active",
     "wifi.rssi",
     "wifi.noise",
     "wifi.snr",
@@ -14,8 +16,10 @@ struct StatusFieldEncoder {
     "wifi.tx_rate",
     "wifi.channel",
     "wifi.channel_band",
+    "wifi.channel_width",
     "wifi.security",
     "wifi.phy_mode",
+    "wifi.interface_mode",
     "wifi.country_code",
     "wifi.roaming",
     "wifi.ssid_changed_at",
@@ -43,7 +47,9 @@ struct StatusFieldEncoder {
     put(&result, "wifi.ssid", payload.wifi.ssid)
     put(&result, "wifi.bssid", payload.wifi.bssid)
     put(&result, "wifi.interface", payload.wifi.interface)
+    put(&result, "wifi.hardware_address", payload.wifi.hardwareAddress)
     put(&result, "wifi.power", payload.wifi.power)
+    put(&result, "wifi.service_active", payload.wifi.serviceActive)
     put(&result, "wifi.rssi", payload.wifi.rssi)
     put(&result, "wifi.noise", payload.wifi.noise)
     put(&result, "wifi.snr", payload.wifi.snr)
@@ -51,8 +57,10 @@ struct StatusFieldEncoder {
     put(&result, "wifi.tx_rate", payload.wifi.txRate)
     put(&result, "wifi.channel", payload.wifi.channel)
     put(&result, "wifi.channel_band", payload.wifi.channelBand)
+    put(&result, "wifi.channel_width", payload.wifi.channelWidth)
     put(&result, "wifi.security", payload.wifi.security)
     put(&result, "wifi.phy_mode", payload.wifi.phyMode)
+    put(&result, "wifi.interface_mode", payload.wifi.interfaceMode)
     put(&result, "wifi.country_code", payload.wifi.countryCode)
     put(&result, "wifi.roaming", payload.wifi.roaming)
     put(&result, "wifi.ssid_changed_at", payload.wifi.ssidChangedAt)

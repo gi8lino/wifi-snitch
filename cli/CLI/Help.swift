@@ -41,7 +41,9 @@ func printHelp() {
       wifi.ssid
       wifi.bssid
       wifi.interface
+      wifi.hardware_address
       wifi.power
+      wifi.service_active
       wifi.rssi
       wifi.noise
       wifi.snr
@@ -49,8 +51,10 @@ func printHelp() {
       wifi.tx_rate
       wifi.channel
       wifi.channel_band
+      wifi.channel_width
       wifi.security
       wifi.phy_mode
+      wifi.interface_mode
       wifi.country_code
       wifi.roaming
       wifi.ssid_changed_at

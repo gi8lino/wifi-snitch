@@ -1,64 +1,47 @@
 # WiFiSnitch
 
-WiFiSnitch is a small macOS background app that exposes Wi-Fi and network tunnel status over a local Unix socket.
+WiFiSnitch is a small macOS helper app that exposes Wi-Fi and network status over a local Unix socket.
 
-It exists because recent macOS versions often hide the current SSID from normal shell scripts. WiFiSnitch runs as a bundled app in user context, requests the required location permission, and makes the result available to local tools like SketchyBar.
+It exists because recent macOS versions often hide the current SSID and related Wi-Fi details from normal shell scripts. WiFiSnitch runs in the user session, requests the required location permission, and makes the result available to local tools like SketchyBar.
+
+## Scope
+
+WiFiSnitch is intentionally narrow:
+
+- Wi-Fi data that is awkward to access from shell scripts on modern macOS
+- network and tunnel status that is useful in bars and small scripts
+- a tiny local socket protocol
+- a small CLI client
+- a Homebrew-friendly app and service workflow
 
 ## Features
 
-- current SSID
-- current BSSID
-- Wi-Fi interface name
-- Wi-Fi power state
-- RSSI
-- noise
-- SNR
-- derived link quality
-- transmit rate
-- channel
-- channel band
-- security mode
-- PHY mode
-- country code
-- roaming detection
-- SSID change timestamp
-- interface change timestamp
-- active tunnel interface
-- active tunnel interfaces
-- primary interface
-- primary interface tunnel detection
-- IPv4 address
-- IPv6 address
-- default gateway
-- DNS servers
-- internet reachability hint
-- captive portal hint
+- current SSID and BSSID
+- interface name and hardware address
+- power and service state
+- RSSI, noise, SNR, and derived link quality
+- transmit rate, channel, band, and channel width
+- security mode, PHY mode, interface mode, and country code
+- roaming detection and simple change timestamps
+- primary interface and tunnel detection
+- active tunnel interface list
+- IPv4, IPv6, default gateway, and DNS servers
+- internet reachability and captive portal hints
 - location authorization state
-- location permission state
-- local Unix socket API
-- small CLI client
-- Homebrew-managed background service support
 
-## Project layout
+## Install
 
-- `agent/` — the macOS app target
-- `cli/` — the CLI client
-- `shared/` — shared socket helpers
-- `dist/` — packaged output created by `make bundle`
-
-## Install with Homebrew
-
-WiFiSnitch is distributed through Homebrew in the `gi8lino/homebrew-tap` tap.
+WiFiSnitch is distributed through Homebrew in the `gi8lino/tap` tap.
 
 Add the tap:
 
-```sh
+```bash
 brew tap gi8lino/tap
 ```
 
 Install WiFiSnitch:
 
-```sh
+```bash
 brew install gi8lino/tap/wifisnitch
 ```
 
@@ -68,91 +51,34 @@ This installs:
 - `wifisnitch` to launch the app bundle executable
 - `wifisnitchctl` for CLI access to the local socket API
 
-## Start at login with Homebrew
+Start it as a user service:
 
-Start WiFiSnitch as a Homebrew-managed user service:
-
-```sh
+```bash
 brew services start wifisnitch
 ```
 
-Stop it:
+Useful service commands:
 
-```sh
+```bash
 brew services stop wifisnitch
-```
-
-Restart it:
-
-```sh
 brew services restart wifisnitch
 ```
 
-## Upgrade
+> [!NOTE]
+> By using WiFiSnitch, you acknowledge that it is not notarized.
+>
+> Notarization is one of Apple's distribution checks. In practice, it means sending binaries to Apple and dealing with their packaging and approval flow.
+>
+> I do not mind the general idea of signing or notarization. I specifically do not want to spend time dealing with Apple's developer account, notarization pipeline, and release bureaucracy for this project.
+>
+> The Homebrew install is meant to work out of the box in the common case. If macOS still blocks WiFiSnitch or the CLI with a Gatekeeper or malware verification warning on your machine, remove the quarantine attribute and start it again.
 
-```sh
-brew upgrade gi8lino/tap/wifisnitch
-brew services restart wifisnitch
-```
+If macOS blocks the app or CLI with a Gatekeeper or malware verification warning, remove quarantine and start it again:
 
-## Uninstall
-
-```sh
-brew services stop wifisnitch
-brew uninstall gi8lino/tap/wifisnitch
-```
-
-## Build from source
-
-Build everything:
-
-```sh
-swift build
-```
-
-Build optimized binaries:
-
-```sh
-swift build -c release
-```
-
-Package the app bundle and copy the CLI into `dist/`:
-
-```sh
-make bundle
-```
-
-That creates:
-
-- `dist/WiFiSnitch.app`
-- `dist/wifisnitchctl`
-
-## Run from a local build
-
-Start the packaged app:
-
-```sh
-open dist/WiFiSnitch.app
-```
-
-Or:
-
-```sh
-make run
-```
-
-You can also run the raw build output directly during development:
-
-```sh
-swift build
-.build/debug/WiFiSnitchAgent
-```
-
-Or optimized:
-
-```sh
-swift build -c release
-.build/release/WiFiSnitchAgent
+```bash
+xattr -dr com.apple.quarantine "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
+xattr -d com.apple.quarantine "$(command -v wifisnitchctl)"
+brew services start wifisnitch
 ```
 
 ## Permissions
@@ -163,15 +89,15 @@ On first launch, macOS should prompt for permission.
 
 If the permission prompt does not appear or you want to reset it:
 
-```sh
+```bash
 tccutil reset Location io.github.gi8lino.wifisnitch
 open /Applications/WiFiSnitch.app
 ```
 
 If installed with Homebrew, open the app bundle directly if needed:
 
-```sh
-open /usr/local/opt/wifisnitch/libexec/WiFiSnitch.app
+```bash
+open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
 ```
 
 Then allow location access in:
@@ -180,106 +106,70 @@ Then allow location access in:
 
 You can verify the current state with:
 
-```sh
-wifisnitchctl get auth.location_authorized --format=text
-wifisnitchctl get auth.location_permission_state --format=text
+```bash
+wifisnitchctl field auth.location_authorized --format=text
+wifisnitchctl field auth.location_permission_state --format=text
 ```
 
-## Socket
-
-WiFiSnitch listens on:
-
-```text
-~/Library/Caches/wifisnitch/wifisnitch.sock
-```
-
-You can override the socket path with the `WIFISNITCH_SOCKET` environment variable.
-
-## CLI usage
+## Usage
 
 Show help:
 
-```sh
+```bash
 wifisnitchctl --help
 ```
 
 Common examples:
 
-```sh
+```bash
 wifisnitchctl
 wifisnitchctl ssid
-wifisnitchctl status
 wifisnitchctl status --format=lines
 wifisnitchctl wifi
 wifisnitchctl network
-wifisnitchctl auth
-wifisnitchctl signal
 wifisnitchctl debug
-wifisnitchctl get wifi.ssid --format=text
-wifisnitchctl get wifi.ssid,wifi.bssid,wifi.channel --format=lines
-wifisnitchctl get wifi.snr,wifi.link_quality --format=lines
-wifisnitchctl get network.primary_interface,network.active_tunnel_interface --format=lines
-wifisnitchctl get network.primary_interface_is_tunnel --format=text
-wifisnitchctl get network.active_tunnel_interfaces --format=lines
-wifisnitchctl get network.ipv4_address,network.default_gateway --format=lines
+wifisnitchctl field wifi.ssid --format=text
+wifisnitchctl field wifi.ssid,wifi.bssid,wifi.channel --format=lines
+wifisnitchctl field wifi.hardware_address,wifi.interface_mode --format=lines
+wifisnitchctl field network.primary_interface,network.active_tunnel_interface --format=lines
+wifisnitchctl field network.primary_interface_is_tunnel --format=text
 wifisnitchctl ping
 wifisnitchctl version
-wifisnitchctl fields
-wifisnitchctl formats
+```
+
+The socket path is:
+
+```text
+~/Library/Caches/wifisnitch/wifisnitch.sock
+```
+
+You can override it with:
+
+```bash
+WIFISNITCH_SOCKET=/path/to/socket
 ```
 
 ## Commands
 
 Built-in commands:
 
-- `PING`
-- `VERSION`
-- `FIELDS`
-- `FORMATS`
-- `GET_SSID`
-- `GET_STATUS`
-- `GET_WIFI`
-- `GET_NETWORK`
-- `GET_AUTH`
-- `GET_SIGNAL`
-- `GET_DEBUG`
+- `ping`
+- `version`
+- `fields`
+- `formats`
+- `ssid`
+- `status`
+- `wifi`
+- `network`
+- `auth`
+- `signal`
+- `debug`
+- `field`
 
 Field queries use:
 
-- `GET <field>`
-- `GET <field1>,<field2>,...`
-
-Examples:
-
-- `GET wifi.ssid`
-- `GET wifi.bssid`
-- `GET wifi.interface`
-- `GET wifi.power`
-- `GET wifi.rssi`
-- `GET wifi.noise`
-- `GET wifi.snr`
-- `GET wifi.link_quality`
-- `GET wifi.tx_rate`
-- `GET wifi.channel`
-- `GET wifi.channel_band`
-- `GET wifi.security`
-- `GET wifi.phy_mode`
-- `GET wifi.country_code`
-- `GET wifi.roaming`
-- `GET wifi.ssid_changed_at`
-- `GET wifi.interface_changed_at`
-- `GET network.primary_interface`
-- `GET network.active_tunnel_interface`
-- `GET network.active_tunnel_interfaces`
-- `GET network.primary_interface_is_tunnel`
-- `GET network.ipv4_address`
-- `GET network.ipv6_address`
-- `GET network.default_gateway`
-- `GET network.dns_servers`
-- `GET network.internet_reachable`
-- `GET network.captive_portal`
-- `GET auth.location_authorized`
-- `GET auth.location_permission_state`
+- `field <field>`
+- `field <field1>,<field2>,...`
 
 Formats:
 
@@ -287,9 +177,45 @@ Formats:
 - `json`
 - `lines`
 
+Available fields:
+
+- `wifi.ssid`
+- `wifi.bssid`
+- `wifi.interface`
+- `wifi.hardware_address`
+- `wifi.power`
+- `wifi.service_active`
+- `wifi.rssi`
+- `wifi.noise`
+- `wifi.snr`
+- `wifi.link_quality`
+- `wifi.tx_rate`
+- `wifi.channel`
+- `wifi.channel_band`
+- `wifi.channel_width`
+- `wifi.security`
+- `wifi.phy_mode`
+- `wifi.interface_mode`
+- `wifi.country_code`
+- `wifi.roaming`
+- `wifi.ssid_changed_at`
+- `wifi.interface_changed_at`
+- `network.primary_interface`
+- `network.active_tunnel_interface`
+- `network.active_tunnel_interfaces`
+- `network.primary_interface_is_tunnel`
+- `network.ipv4_address`
+- `network.ipv6_address`
+- `network.default_gateway`
+- `network.dns_servers`
+- `network.internet_reachable`
+- `network.captive_portal`
+- `auth.location_authorized`
+- `auth.location_permission_state`
+
 ## Output shape
 
-`GET_STATUS` returns the full default payload as JSON.
+`status` returns the full default payload as JSON.
 
 Example:
 
@@ -315,9 +241,12 @@ Example:
     "bssid": "aa:bb:cc:dd:ee:ff",
     "channel": 44,
     "channel_band": "5ghz",
+    "channel_width": "80mhz",
     "country_code": "CH",
+    "hardware_address": "11:22:33:44:55:66",
     "interface": "en0",
     "interface_changed_at": "2026-03-17T12:34:56Z",
+    "interface_mode": "station",
     "link_quality": 68,
     "noise": -90,
     "phy_mode": "802.11ax",
@@ -325,6 +254,7 @@ Example:
     "roaming": false,
     "rssi": -63,
     "security": "wpa3_personal",
+    "service_active": true,
     "snr": 27,
     "ssid": "ExampleWiFi",
     "ssid_changed_at": "2026-03-17T12:30:00Z",
@@ -335,66 +265,90 @@ Example:
 
 Notes:
 
-- `network.active_tunnel_interface` is a convenience field for the active tunnel-like interface only when the primary interface itself is tunnel-like.
+- `network.active_tunnel_interface` is a convenience field for the primary tunnel-like interface when the primary interface itself looks like a tunnel.
 - `network.active_tunnel_interfaces` contains all currently visible tunnel-like interfaces.
-- `network.primary_interface_is_tunnel` tells you whether the primary interface itself looks like a tunnel.
 - `network.internet_reachable` is a cheap reachability hint, not an active probe.
 - `network.captive_portal` is a cheap heuristic, not a captive portal login check.
-- `GET_DEBUG` exposes extra internal state useful for troubleshooting.
+- `ssid` returns `OK <ssid>` or `EMPTY`.
+- `debug` returns extra internal state useful for troubleshooting.
 
-## SketchyBar example
+## Lua example
 
 Show the current Wi-Fi name:
 
 ```lua
-sbar.exec("wifisnitchctl get wifi.ssid --format=text", function(output)
-  local ssid = output:gsub("^%s+", ""):gsub("%s+$", "")
-  if ssid == "" or ssid == "EMPTY" then
-    ssid = "WiFi"
-  end
-end)
+local handle = io.popen("wifisnitchctl field wifi.ssid --format=text")
+local output = handle and handle:read("*a") or ""
+if handle then handle:close() end
+
+local ssid = output:gsub("^%s+", ""):gsub("%s+$", "")
+if ssid == "" or ssid == "EMPTY" then
+  ssid = "WiFi"
+end
+
+print(ssid)
 ```
 
-Show Wi-Fi plus tunnel info:
+Read Wi-Fi plus tunnel info:
 
 ```lua
-sbar.exec(
-  "wifisnitchctl get wifi.ssid,network.active_tunnel_interface,network.primary_interface_is_tunnel --format=lines",
-  function(output)
-    -- parse output here
-  end
+local handle = io.popen(
+  "wifisnitchctl field wifi.ssid,network.active_tunnel_interface,network.primary_interface_is_tunnel --format=lines"
 )
+local output = handle and handle:read("*a") or ""
+if handle then handle:close() end
+
+local values = {}
+for line in output:gmatch("[^\r\n]+") do
+  local key, value = line:match("^([^=]+)=(.*)$")
+  if key then
+    values[key] = value
+  end
+end
+
+print(values["wifi.ssid"] or "")
+print(values["network.active_tunnel_interface"] or "")
+print(values["network.primary_interface_is_tunnel"] or "")
 ```
 
-## Notes
+## Build
 
-- WiFiSnitch is an agent app with `LSUIElement`.
-- It must run in the logged-in user session.
-- The first launch may trigger the macOS location permission prompt.
-- The CLI is a thin socket client.
-- `GET_SSID` returns `OK <ssid>` or `EMPTY`.
-- `GET_STATUS` returns the full default payload as JSON.
-- `GET_DEBUG` returns extra internal state useful for troubleshooting.
-- `--socket` overrides the socket path for the CLI.
-- `WIFISNITCH_SOCKET` overrides the socket path for both the app and the CLI.
+Build everything:
 
-## Clean and rebuild
+```bash
+swift build
+```
 
-```sh
-make clean
+Build optimized binaries:
+
+```bash
+swift build -c release
+```
+
+Package the app bundle and CLI into `dist/`:
+
+```bash
 make bundle
 ```
 
-Or manually:
+Run the packaged app:
 
-```sh
-swift build -c release
+```bash
+open dist/WiFiSnitch.app
+```
+
+Or:
+
+```bash
+make run
+```
+
+Stop local and Homebrew-managed instances:
+
+```bash
+make stop
 ```
 
 ## License
 
 This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
-
-```
-
-```

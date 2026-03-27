@@ -26,7 +26,9 @@ final class WiFiProvider {
     let ssid = normalized(iface?.ssid())
     let bssid = normalized(iface?.bssid())
     let interfaceName = normalized(iface?.interfaceName)
+    let hardwareAddress = normalized(iface?.hardwareAddress())
     let power = iface?.powerOn()
+    let serviceActive = iface?.serviceActive()
 
     let rssi = validMeasurement(iface?.rssiValue())
     let noise = validMeasurement(iface?.noiseMeasurement())
@@ -38,6 +40,7 @@ final class WiFiProvider {
     let channelInfo = iface?.wlanChannel()
     let channel = channelInfo.map { Int($0.channelNumber) }
     let channelBand = channelInfo.map { channelBandString($0.channelBand) }
+    let channelWidth = channelInfo.map { channelWidthString($0.channelWidth) }
 
     let security = iface.map(securityString)
 
@@ -48,6 +51,7 @@ final class WiFiProvider {
       phyMode = nil
     }
 
+    let interfaceMode = iface.map { interfaceModeString($0.interfaceMode()) }
     let countryCode = normalized(iface?.countryCode())
 
     let state = updateChangeTracking(ssid: ssid, bssid: bssid, interface: interfaceName)
@@ -56,7 +60,9 @@ final class WiFiProvider {
       ssid: ssid,
       bssid: bssid,
       interface: interfaceName,
+      hardwareAddress: hardwareAddress,
       power: power,
+      serviceActive: serviceActive,
       rssi: rssi,
       noise: noise,
       snr: snr,
@@ -64,8 +70,10 @@ final class WiFiProvider {
       txRate: txRate,
       channel: channel,
       channelBand: channelBand,
+      channelWidth: channelWidth,
       security: security,
       phyMode: phyMode,
+      interfaceMode: interfaceMode,
       countryCode: countryCode,
       roaming: state.roaming,
       ssidChangedAt: state.ssidChangedAt,
@@ -152,6 +160,26 @@ final class WiFiProvider {
     }
   }
 
+  /// Returns a normalized Wi-Fi channel width string.
+  private func channelWidthString(_ width: CWChannelWidth) -> String {
+    let raw = String(describing: width).lowercased()
+
+    switch raw {
+    case "widthunknown":
+      return "unknown"
+    case "width20mhz":
+      return "20mhz"
+    case "width40mhz":
+      return "40mhz"
+    case "width80mhz":
+      return "80mhz"
+    case "width160mhz":
+      return "160mhz"
+    default:
+      return raw.isEmpty ? "unknown" : raw
+    }
+  }
+
   /// Returns a normalized security string from the interface.
   private func securityString(_ interface: CWInterface) -> String {
     let raw = String(describing: interface.security())
@@ -222,6 +250,27 @@ final class WiFiProvider {
       return "802.11ac"
     case "mode11ax", "11ax":
       return "802.11ax"
+    default:
+      return raw.isEmpty ? "unknown" : raw.lowercased()
+    }
+  }
+
+  /// Returns a normalized interface mode string.
+  private func interfaceModeString(_ mode: CWInterfaceMode) -> String {
+    let raw = String(describing: mode)
+      .replacingOccurrences(of: "CWInterfaceMode", with: "")
+      .replacingOccurrences(of: ".", with: "")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    switch raw.lowercased() {
+    case "modenone", "none":
+      return "none"
+    case "modestation", "station":
+      return "station"
+    case "modeibss", "ibss":
+      return "ibss"
+    case "modehostap", "hostap":
+      return "hostap"
     default:
       return raw.isEmpty ? "unknown" : raw.lowercased()
     }

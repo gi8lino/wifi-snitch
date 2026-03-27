@@ -10,7 +10,9 @@ struct WiFiPayload: Encodable {
   let ssid: String?
   let bssid: String?
   let interface: String?
+  let hardwareAddress: String?
   let power: Bool?
+  let serviceActive: Bool?
   let rssi: Int?
   let noise: Int?
   let snr: Int?
@@ -18,8 +20,10 @@ struct WiFiPayload: Encodable {
   let txRate: Int?
   let channel: Int?
   let channelBand: String?
+  let channelWidth: String?
   let security: String?
   let phyMode: String?
+  let interfaceMode: String?
   let countryCode: String?
   let roaming: Bool
   let ssidChangedAt: String?
@@ -29,7 +33,9 @@ struct WiFiPayload: Encodable {
     case ssid
     case bssid
     case interface
+    case hardwareAddress = "hardware_address"
     case power
+    case serviceActive = "service_active"
     case rssi
     case noise
     case snr
@@ -37,8 +43,10 @@ struct WiFiPayload: Encodable {
     case txRate = "tx_rate"
     case channel
     case channelBand = "channel_band"
+    case channelWidth = "channel_width"
     case security
     case phyMode = "phy_mode"
+    case interfaceMode = "interface_mode"
     case countryCode = "country_code"
     case roaming
     case ssidChangedAt = "ssid_changed_at"

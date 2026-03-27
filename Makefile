@@ -46,7 +46,7 @@ endif
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all prepare-version build bundle package release agent cli clean clean-dist run dev \
+.PHONY: help all prepare-version build bundle package release agent cli clean clean-dist run dev stop \
         build-agent build-cli verify stamp-plist sign \
         print-arch print-version print-latest-tag print-package-sha256 \
         tag-patch tag-minor tag-major push-tags
@@ -75,6 +75,9 @@ agent: prepare-version ## Build only the app executable for the selected ARCH.
 
 cli: prepare-version ## Build only the CLI executable for the selected ARCH.
 	@$(MAKE) --no-print-directory build-cli ARCH=$(ARCH) VERSION=$(VERSION)
+
+fmt: ## Format all Swift source files in the repository.
+	@swift format format --in-place --recursive --parallel .
 
 bundle: prepare-version clean-dist ## Build the .app bundle and CLI into dist/.
 	@mkdir -p "$(APP_MACOS)" "$(APP_RESOURCES)" "$(DIST_DIR)"
@@ -149,6 +152,12 @@ run: bundle ## Build and open the app bundle.
 dev: prepare-version ## Fast debug run without bundling.
 	@$(SWIFT_BUILD_DEBUG) --product $(AGENT_PRODUCT)
 	@swift run -c debug $(AGENT_PRODUCT)
+
+stop: ## Stop Homebrew and local WiFiSnitch app instances.
+	@brew services stop wifisnitch >/dev/null 2>&1 || true
+	@pkill -x "$(APP_EXEC)" >/dev/null 2>&1 || true
+	@pkill -x "$(AGENT_PRODUCT)" >/dev/null 2>&1 || true
+	@pkill -f "$(abspath $(APP_BIN))" >/dev/null 2>&1 || true
 
 ##@ Cleanup
 

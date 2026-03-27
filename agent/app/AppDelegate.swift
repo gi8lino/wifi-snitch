@@ -2,16 +2,16 @@ import Cocoa
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private let controller = AppController()
+  private let controller = AppController()
 
-    /// Starts the agent when the app finishes launching.
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
-        controller.start()
-    }
+  /// Starts the agent when the app finishes launching.
+  func applicationDidFinishLaunching(_ notification: Notification) {
+    NSApp.setActivationPolicy(.accessory)
+    controller.start()
+  }
 
-    /// Stops the agent before the app terminates.
-    func applicationWillTerminate(_ notification: Notification) {
-        controller.stop()
-    }
+  /// Stops the agent before the app terminates.
+  func applicationWillTerminate(_ notification: Notification) {
+    controller.stop()
+  }
 }

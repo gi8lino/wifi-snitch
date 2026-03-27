@@ -9,6 +9,9 @@ APP_CONTENTS := $(APP_BUNDLE)/Contents
 APP_MACOS := $(APP_CONTENTS)/MacOS
 APP_RESOURCES := $(APP_CONTENTS)/Resources
 APP_BIN := $(APP_MACOS)/$(APP_EXEC)
+APP_ICON_SVG := packaging/WiFiSnitch.svg
+APP_ICON_FILE := $(APP_NAME)
+APP_ICON_ICNS := $(APP_RESOURCES)/$(APP_ICON_FILE).icns
 CLI_BIN := $(DIST_DIR)/$(CLI_PRODUCT)
 PLIST_TEMPLATE := packaging/Info.plist
 PLIST := $(APP_CONTENTS)/Info.plist
@@ -46,7 +49,7 @@ endif
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all prepare-version build bundle package release agent cli clean clean-dist run dev stop \
+.PHONY: help all prepare-version build bundle package release agent cli clean clean-dist run dev stop icons \
         build-agent build-cli verify stamp-plist sign \
         print-arch print-version print-latest-tag print-package-sha256 \
         tag-patch tag-minor tag-major push-tags
@@ -83,6 +86,7 @@ bundle: prepare-version clean-dist ## Build the .app bundle and CLI into dist/.
 	@mkdir -p "$(APP_MACOS)" "$(APP_RESOURCES)" "$(DIST_DIR)"
 	@$(MAKE) --no-print-directory build-agent ARCH=$(ARCH) VERSION=$(VERSION)
 	@$(MAKE) --no-print-directory build-cli ARCH=$(ARCH) VERSION=$(VERSION)
+	@$(MAKE) --no-print-directory icons
 	@cp "$(PLIST_TEMPLATE)" "$(PLIST)"
 	@$(MAKE) --no-print-directory stamp-plist VERSION=$(VERSION) BUNDLE_ID=$(BUNDLE_ID)
 	@chmod +x "$(APP_BIN)" "$(CLI_BIN)"
@@ -127,12 +131,40 @@ else
 	@cp ".build/$(ARCH)-apple-macosx/release/$(CLI_PRODUCT)" "$(CLI_BIN)"
 endif
 
+icons: ## Generate the app .icns file from the SVG icon.
+	@mkdir -p "$(APP_RESOURCES)"
+	@set -e; \
+	svg="$(APP_ICON_SVG)"; \
+	icns="$(APP_ICON_ICNS)"; \
+	base="$$(basename "$$icns" .icns)"; \
+	tmp_dir="$(DIST_DIR)/.$$base.iconset"; \
+	render_dir="$(DIST_DIR)/.$$base.render"; \
+	rm -rf "$$tmp_dir" "$$render_dir"; \
+	mkdir -p "$$tmp_dir" "$$render_dir"; \
+	qlmanage -t -s 1024 -o "$$render_dir" "$$svg" >/dev/null 2>&1; \
+	rendered_png="$$render_dir/$$(basename "$$svg").png"; \
+	test -f "$$rendered_png"; \
+	cp "$$rendered_png" "$$tmp_dir/icon_512x512@2x.png"; \
+	sips -z 16 16 "$$rendered_png" --out "$$tmp_dir/icon_16x16.png" >/dev/null; \
+	sips -z 32 32 "$$rendered_png" --out "$$tmp_dir/icon_16x16@2x.png" >/dev/null; \
+	sips -z 32 32 "$$rendered_png" --out "$$tmp_dir/icon_32x32.png" >/dev/null; \
+	sips -z 64 64 "$$rendered_png" --out "$$tmp_dir/icon_32x32@2x.png" >/dev/null; \
+	sips -z 128 128 "$$rendered_png" --out "$$tmp_dir/icon_128x128.png" >/dev/null; \
+	sips -z 256 256 "$$rendered_png" --out "$$tmp_dir/icon_128x128@2x.png" >/dev/null; \
+	sips -z 256 256 "$$rendered_png" --out "$$tmp_dir/icon_256x256.png" >/dev/null; \
+	sips -z 512 512 "$$rendered_png" --out "$$tmp_dir/icon_256x256@2x.png" >/dev/null; \
+	sips -z 512 512 "$$rendered_png" --out "$$tmp_dir/icon_512x512.png" >/dev/null; \
+	iconutil -c icns "$$tmp_dir" -o "$$icns"; \
+	rm -rf "$$tmp_dir" "$$render_dir"
+
 stamp-plist: ## Internal target: stamp version and bundle ID into Info.plist.
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier $(BUNDLE_ID)' "$(PLIST)"
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleShortVersionString $(VERSION)' "$(PLIST)"
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleVersion $(VERSION)' "$(PLIST)"
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleExecutable $(APP_EXEC)' "$(PLIST)"
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleName $(APP_NAME)' "$(PLIST)" >/dev/null 2>&1 || true
+	@/usr/libexec/PlistBuddy -c 'Add :CFBundleIconFile string $(APP_ICON_FILE)' "$(PLIST)" >/dev/null 2>&1 || \
+		/usr/libexec/PlistBuddy -c 'Set :CFBundleIconFile $(APP_ICON_FILE)' "$(PLIST)"
 
 sign: ## Ad-hoc sign the bundle for local launching.
 	@codesign --force --deep --sign - "$(APP_BUNDLE)" >/dev/null 2>&1 || true

@@ -7,10 +7,6 @@ on:
         description: Release tag
         required: true
         type: string
-      version:
-        description: Release version without leading v
-        required: true
-        type: string
 
 jobs:
   update-formula:
@@ -22,7 +18,7 @@ jobs:
         shell: bash
         run: |
           TAG="${{ inputs.tag }}"
-          VERSION="${{ inputs.version }}"
+          VERSION="${TAG#v}"
           ASSET_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/WiFiSnitch-${VERSION}.zip"
 
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
@@ -57,11 +53,11 @@ jobs:
           VERSION="${{ steps.vars.outputs.version }}"
           SHA="${{ steps.sha.outputs.sha }}"
 
-          cat > "${FORMULA_FILE}" <<'EOF'
+          cat > "${FORMULA_FILE}" <<EOF
           class Wifisnitch < Formula
             desc "Background macOS Wi-Fi and network status agent with CLI access"
             homepage "https://github.com/gi8lino/wifi-snitch"
-            url "https://github.com/gi8lino/wifi-snitch/releases/download/v${VERSION}/WiFiSnitch-${VERSION}/.zip"
+            url "https://github.com/gi8lino/wifi-snitch/releases/download/v${VERSION}/WiFiSnitch-${VERSION}.zip"
             sha256 "${SHA}"
             license "Apache-2.0"
             version "${VERSION}"

@@ -74,7 +74,8 @@ private func commandSpec(named name: String) -> CommandSpec? {
 }
 
 /// Parses the socket path that follows a socket flag.
-private func parseSocketPath(_ arguments: [String], index: inout Int, flag: String) throws -> String {
+private func parseSocketPath(_ arguments: [String], index: inout Int, flag: String) throws -> String
+{
   index += 1
   guard index < arguments.count else {
     throw AppError.message("missing value for \(flag)")

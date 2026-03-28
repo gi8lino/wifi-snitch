@@ -109,7 +109,8 @@ enum CLI {
       ]).map { "  \($0)" }
       .joined(separator: "\n")
 
-    let fieldLines = statusFieldRegistry
+    let fieldLines =
+      statusFieldRegistry
       .map { formatOption($0.name, $0.help) }
       .joined(separator: "\n")
 

@@ -33,7 +33,8 @@ public let statusFieldRegistry: [StatusFieldSpec] = [
   .init(name: "network.primary_interface", help: "Primary network interface"),
   .init(name: "network.active_tunnel_interface", help: "First active tunnel interface"),
   .init(name: "network.active_tunnel_interfaces", help: "All active tunnel interfaces"),
-  .init(name: "network.primary_interface_is_tunnel", help: "Whether the primary interface is a tunnel"),
+  .init(
+    name: "network.primary_interface_is_tunnel", help: "Whether the primary interface is a tunnel"),
   .init(name: "network.ipv4_address", help: "Primary IPv4 address"),
   .init(name: "network.ipv6_address", help: "Primary IPv6 address"),
   .init(name: "network.default_gateway", help: "Default gateway address"),

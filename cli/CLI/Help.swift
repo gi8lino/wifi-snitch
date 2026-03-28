@@ -1,10 +1,79 @@
 import Foundation
 import WiFiSnitchShared
 
+struct CLIOption {
+  let flag: String
+  let short: String?
+  let description: String
+  let placeholder: String?
+
+  init(
+    flag: String,
+    short: String? = nil,
+    description: String,
+    placeholder: String? = nil
+  ) {
+    self.flag = flag
+    self.short = short
+    self.description = description
+    self.placeholder = placeholder
+  }
+}
+
 enum CLI {
+  static let socketOption = CLIOption(
+    flag: "--socket",
+    short: "-s",
+    description: "Override socket path",
+    placeholder: "path"
+  )
+  static let versionOption = CLIOption(
+    flag: "--version",
+    short: "-v",
+    description: "Show the wifisnitchctl version"
+  )
+  static let helpOption = CLIOption(
+    flag: "--help",
+    short: "-h",
+    description: "Show this help"
+  )
+
+  static let appOptions: [CLIOption] = [
+    socketOption,
+    versionOption,
+    helpOption,
+  ]
+
   /// Formats one help row with aligned option text.
   static func formatOption(_ option: String, _ description: String) -> String {
     "  " + option.padding(toLength: 32, withPad: " ", startingAt: 0) + description
+  }
+
+  /// Returns the rendered text for one option, including short flag and placeholder.
+  static func optionText(for option: CLIOption) -> String {
+    var text = option.flag
+
+    if let short = option.short {
+      text += ", \(short)"
+    }
+
+    if let placeholder = option.placeholder {
+      text += " <\(placeholder)>"
+    }
+
+    return text
+  }
+
+  /// Returns whether one argument matches an option's long or short flag.
+  static func matches(_ option: CLIOption, argument: String) -> Bool {
+    option.flag == argument || option.short == argument
+  }
+
+  /// Returns the inline `--flag=value` payload when present.
+  static func inlineValue(for option: CLIOption, argument: String) -> String? {
+    let prefix = "\(option.flag)="
+    guard argument.hasPrefix(prefix) else { return nil }
+    return String(argument.dropFirst(prefix.count))
   }
 
   /// Prints one plain error line.
@@ -61,9 +130,7 @@ enum CLI {
       \(fieldLines)
 
       options:
-      \(formatOption("--socket, -s <path>", "Override socket path"))
-      \(formatOption("--version, -v", "Show the wifisnitchctl version"))
-      \(formatOption("--help, -h", "Show this help"))
+      \(appOptions.map { formatOption(optionText(for: $0), $0.description) }.joined(separator: "\n"))
 
       environment:
       \(formatOption("WIFISNITCH_SOCKET", "Override socket path"))

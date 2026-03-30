@@ -3,7 +3,7 @@ import WiFiSnitchShared
 
 /// Holds the validated request and target socket path.
 struct ParsedArguments {
-  let request: String
+  let request: StatusAgentRequest
   let socketPath: String
 }
 
@@ -14,7 +14,7 @@ enum AppError: Error {
   case message(String)
 }
 
-/// Parses command-line arguments into one validated request.
+/// Parses command-line arguments into one validated structured request.
 func parseArguments(_ arguments: [String]) throws -> ParsedArguments {
   var socketPath = defaultSocketPath()
   var commandArgs: [String] = []
@@ -47,30 +47,35 @@ func parseArguments(_ arguments: [String]) throws -> ParsedArguments {
     break
   }
 
-  return ParsedArguments(request: try buildRequest(from: commandArgs), socketPath: socketPath)
+  return ParsedArguments(
+    request: try buildRequest(from: commandArgs),
+    socketPath: socketPath
+  )
 }
 
-/// Converts command arguments into one internal protocol request.
-private func buildRequest(from args: [String]) throws -> String {
+/// Converts CLI command arguments into one structured internal request.
+private func buildRequest(from args: [String]) throws -> StatusAgentRequest {
   guard let first = args.first else {
-    return "ssid"
+    return StatusAgentRequest(command: .ssid)
   }
 
-  guard let command = commandSpec(named: first) else {
+  guard let spec = statusCommandSpec(named: first) else {
     throw AppError.message("unknown command: \(first)")
   }
 
-  let commandArgs = try validatedCommandArgs(from: Array(args.dropFirst()), command: command)
-  guard !commandArgs.isEmpty else {
-    return command.request
-  }
+  let validated = try validatedCommandArgs(from: Array(args.dropFirst()), spec: spec)
 
-  return command.request + " " + commandArgs.joined(separator: " ")
+  return StatusAgentRequest(
+    command: validated.command,
+    fields: validated.fields,
+    format: validated.format
+  )
 }
 
-/// Finds a command spec by CLI name.
-private func commandSpec(named name: String) -> CommandSpec? {
-  commandRegistry.first(where: { $0.name == name.lowercased() })
+private struct ValidatedRequestParts {
+  let command: StatusCommand
+  let fields: [StatusField]
+  let format: ResponseFormat?
 }
 
 /// Parses the socket path that follows a socket flag.
@@ -93,39 +98,71 @@ private func validatedSocketPath(_ socketPath: String, flag: String) throws -> S
   return socketPath
 }
 
-/// Validates command arguments and returns the request arguments unchanged.
-private func validatedCommandArgs(from args: [String], command: CommandSpec) throws -> [String] {
+/// Validates command arguments and returns structured request parts.
+private func validatedCommandArgs(from args: [String], spec: StatusCommandSpec) throws
+  -> ValidatedRequestParts
+{
   var optionArgs = args
+  var fields: [StatusField] = []
+  var format: ResponseFormat?
 
-  if command.requiresFieldSpec {
+  if spec.requiresFieldSpec {
     guard let fieldSpec = optionArgs.first, !fieldSpec.isEmpty else {
-      throw AppError.message("missing field for \(command.name)")
+      throw AppError.message("missing field for \(spec.command.rawValue)")
     }
 
-    // The field spec stays in the request and is excluded from option validation.
+    fields =
+      try fieldSpec
+      .split(separator: ",")
+      .map(String.init)
+      .filter { !$0.isEmpty }
+      .map { raw in
+        guard let field = StatusField(rawValue: raw) else {
+          throw AppError.message("unknown field: \(raw)")
+        }
+        return field
+      }
+
+    guard !fields.isEmpty else {
+      throw AppError.message("missing field for \(spec.command.rawValue)")
+    }
+
     optionArgs.removeFirst()
   }
 
   for arg in optionArgs {
     switch arg {
-    case "--format=json", "--format=lines":
-      guard command.allowsFormat else {
+    case "--format=json":
+      guard spec.allowsFormat else {
         throw AppError.message("command does not accept format arguments")
       }
+      format = .json
+
+    case "--format=lines":
+      guard spec.allowsFormat else {
+        throw AppError.message("command does not accept format arguments")
+      }
+      format = .lines
 
     case "--format=text":
-      guard command.allowsFormat else {
+      guard spec.allowsFormat else {
         throw AppError.message("command does not accept format arguments")
       }
 
-      guard command.allowsTextFormat else {
+      guard spec.allowsTextFormat else {
         throw AppError.message("text format is not supported by this command")
       }
+
+      format = .text
 
     default:
       throw AppError.message("unknown argument: \(arg)")
     }
   }
 
-  return args
+  return ValidatedRequestParts(
+    command: spec.command,
+    fields: fields,
+    format: format
+  )
 }

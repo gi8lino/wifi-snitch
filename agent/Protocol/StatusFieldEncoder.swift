@@ -3,47 +3,47 @@ import WiFiSnitchShared
 
 /// Encodes status payloads into protocol responses.
 struct StatusFieldEncoder {
-  private let availableFields = Set(statusFieldRegistry.map(\.name))
+  private let availableFields = Set(StatusField.allCases)
 
   /// Flattens the status payload into dot-separated fields.
   func flatten(_ payload: StatusPayload) -> [String: String] {
     var result: [String: String] = [:]
 
-    put(&result, "wifi.ssid", payload.wifi.ssid)
-    put(&result, "wifi.bssid", payload.wifi.bssid)
-    put(&result, "wifi.interface", payload.wifi.interface)
-    put(&result, "wifi.hardware_address", payload.wifi.hardwareAddress)
-    put(&result, "wifi.power", payload.wifi.power)
-    put(&result, "wifi.service_active", payload.wifi.serviceActive)
-    put(&result, "wifi.rssi", payload.wifi.rssi)
-    put(&result, "wifi.noise", payload.wifi.noise)
-    put(&result, "wifi.snr", payload.wifi.snr)
-    put(&result, "wifi.link_quality", payload.wifi.linkQuality)
-    put(&result, "wifi.tx_rate", payload.wifi.txRate)
-    put(&result, "wifi.channel", payload.wifi.channel)
-    put(&result, "wifi.channel_band", payload.wifi.channelBand)
-    put(&result, "wifi.channel_width", payload.wifi.channelWidth)
-    put(&result, "wifi.security", payload.wifi.security)
-    put(&result, "wifi.phy_mode", payload.wifi.phyMode)
-    put(&result, "wifi.interface_mode", payload.wifi.interfaceMode)
-    put(&result, "wifi.country_code", payload.wifi.countryCode)
-    put(&result, "wifi.roaming", payload.wifi.roaming)
-    put(&result, "wifi.ssid_changed_at", payload.wifi.ssidChangedAt)
-    put(&result, "wifi.interface_changed_at", payload.wifi.interfaceChangedAt)
+    put(&result, .wifiSSID, payload.wifi.ssid)
+    put(&result, .wifiBSSID, payload.wifi.bssid)
+    put(&result, .wifiInterface, payload.wifi.interface)
+    put(&result, .wifiHardwareAddress, payload.wifi.hardwareAddress)
+    put(&result, .wifiPower, payload.wifi.power)
+    put(&result, .wifiServiceActive, payload.wifi.serviceActive)
+    put(&result, .wifiRSSI, payload.wifi.rssi)
+    put(&result, .wifiNoise, payload.wifi.noise)
+    put(&result, .wifiSNR, payload.wifi.snr)
+    put(&result, .wifiLinkQuality, payload.wifi.linkQuality)
+    put(&result, .wifiTxRate, payload.wifi.txRate)
+    put(&result, .wifiChannel, payload.wifi.channel)
+    put(&result, .wifiChannelBand, payload.wifi.channelBand)
+    put(&result, .wifiChannelWidth, payload.wifi.channelWidth)
+    put(&result, .wifiSecurity, payload.wifi.security)
+    put(&result, .wifiPhyMode, payload.wifi.phyMode)
+    put(&result, .wifiInterfaceMode, payload.wifi.interfaceMode)
+    put(&result, .wifiCountryCode, payload.wifi.countryCode)
+    put(&result, .wifiRoaming, payload.wifi.roaming)
+    put(&result, .wifiSSIDChangedAt, payload.wifi.ssidChangedAt)
+    put(&result, .wifiInterfaceChangedAt, payload.wifi.interfaceChangedAt)
 
-    put(&result, "network.primary_interface", payload.network.primaryInterface)
-    put(&result, "network.active_tunnel_interface", payload.network.activeTunnelInterface)
-    put(&result, "network.active_tunnel_interfaces", payload.network.activeTunnelInterfaces)
-    put(&result, "network.primary_interface_is_tunnel", payload.network.primaryInterfaceIsTunnel)
-    put(&result, "network.ipv4_address", payload.network.ipv4Address)
-    put(&result, "network.ipv6_address", payload.network.ipv6Address)
-    put(&result, "network.default_gateway", payload.network.defaultGateway)
-    put(&result, "network.dns_servers", payload.network.dnsServers)
-    put(&result, "network.internet_reachable", payload.network.internetReachable)
-    put(&result, "network.captive_portal", payload.network.captivePortal)
+    put(&result, .networkPrimaryInterface, payload.network.primaryInterface)
+    put(&result, .networkActiveTunnelInterface, payload.network.activeTunnelInterface)
+    put(&result, .networkActiveTunnelInterfaces, payload.network.activeTunnelInterfaces)
+    put(&result, .networkPrimaryInterfaceIsTunnel, payload.network.primaryInterfaceIsTunnel)
+    put(&result, .networkIPv4Address, payload.network.ipv4Address)
+    put(&result, .networkIPv6Address, payload.network.ipv6Address)
+    put(&result, .networkDefaultGateway, payload.network.defaultGateway)
+    put(&result, .networkDNSServers, payload.network.dnsServers)
+    put(&result, .networkInternetReachable, payload.network.internetReachable)
+    put(&result, .networkCaptivePortal, payload.network.captivePortal)
 
-    put(&result, "auth.location_authorized", payload.auth.locationAuthorized)
-    put(&result, "auth.location_permission_state", payload.auth.locationPermissionState)
+    put(&result, .authLocationAuthorized, payload.auth.locationAuthorized)
+    put(&result, .authLocationPermissionState, payload.auth.locationPermissionState)
 
     return result
   }
@@ -66,11 +66,13 @@ struct StatusFieldEncoder {
   }
 
   /// Encodes selected fields in the requested format.
-  func encodeFields(_ payload: StatusPayload, fields: [String], format: ResponseFormat) -> String {
+  func encodeFields(_ payload: StatusPayload, fields: [StatusField], format: ResponseFormat)
+    -> String
+  {
     let flat = flatten(payload)
 
     for field in fields where !availableFields.contains(field) {
-      return "ERR unknown_field \(field)"
+      return "ERR unknown_field \(field.rawValue)"
     }
 
     switch format {
@@ -78,17 +80,17 @@ struct StatusFieldEncoder {
       guard fields.count == 1 else {
         return "ERR text_requires_single_field"
       }
-      return flat[fields[0]] ?? "EMPTY"
+      return flat[fields[0].rawValue] ?? "EMPTY"
 
     case .lines:
-      return fields.map { "\($0)=\(flat[$0] ?? "")" }.joined(separator: "\n")
+      return fields.map { "\($0.rawValue)=\(flat[$0.rawValue] ?? "")" }.joined(separator: "\n")
 
     case .json:
       var dict: [String: String] = [:]
 
       for field in fields {
-        if let value = flat[field] {
-          dict[field] = value
+        if let value = flat[field.rawValue] {
+          dict[field.rawValue] = value
         }
       }
 
@@ -111,19 +113,19 @@ struct StatusFieldEncoder {
   }
 
   /// Stores an optional scalar value in a flattened field map.
-  private func put<T>(_ dict: inout [String: String], _ key: String, _ value: T?) {
+  private func put<T>(_ dict: inout [String: String], _ field: StatusField, _ value: T?) {
     guard let value else { return }
-    dict[key] = String(describing: value)
+    dict[field.rawValue] = String(describing: value)
   }
 
   /// Stores an optional Boolean value in a flattened field map.
-  private func put(_ dict: inout [String: String], _ key: String, _ value: Bool?) {
+  private func put(_ dict: inout [String: String], _ field: StatusField, _ value: Bool?) {
     guard let value else { return }
-    dict[key] = value ? "true" : "false"
+    dict[field.rawValue] = value ? "true" : "false"
   }
 
   /// Stores a string list in a flattened field map.
-  private func put(_ dict: inout [String: String], _ key: String, _ value: [String]) {
-    dict[key] = value.joined(separator: ",")
+  private func put(_ dict: inout [String: String], _ field: StatusField, _ value: [String]) {
+    dict[field.rawValue] = value.joined(separator: ",")
   }
 }

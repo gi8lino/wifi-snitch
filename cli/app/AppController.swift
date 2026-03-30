@@ -1,4 +1,6 @@
+import EasyBarShared
 import Foundation
+import WiFiSnitchShared
 
 final class AppController {
   /// Runs the CLI command flow and returns the process exit code.
@@ -23,9 +25,12 @@ final class AppController {
     return 1
   }
 
-  /// Sends one request to the socket and prints the reply.
+  /// Sends one structured request to the socket and prints the reply body.
   private func sendCommand(_ parsed: ParsedArguments) throws {
-    let reply = try SocketClient(socketPath: parsed.socketPath).send(request: parsed.request)
-    print(reply, terminator: "")
+    let reply = try LineSocketClientTransport<StatusAgentRequest, StatusAgentResponse>(
+      socketPath: parsed.socketPath
+    ).send(request: parsed.request)
+
+    print(reply.body, terminator: "")
   }
 }

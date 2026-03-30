@@ -105,9 +105,3 @@ struct SignalPayload: Encodable {
     case txRate = "tx_rate"
   }
 }
-
-enum ResponseFormat {
-  case text
-  case json
-  case lines
-}

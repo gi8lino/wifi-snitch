@@ -17,7 +17,7 @@ final class AppController: NSObject, CLLocationManagerDelegate {
     encoder: encoder
   )
 
-  private var server: StatusSocketServer?
+  private var server: StatusAgentServer?
 
   /// Starts location tracking and starts the socket server.
   @MainActor
@@ -27,10 +27,13 @@ final class AppController: NSObject, CLLocationManagerDelegate {
 
     authState.setStatus(locationManager.authorizationStatus)
 
-    server = StatusSocketServer(
+    server = StatusAgentServer(
       socketPath: defaultSocketPath(),
       handleRequest: { [weak self] request in
-        guard let self else { return "ERR server_unavailable" }
+        guard let self else {
+          return StatusAgentResponse(body: "ERR server_unavailable")
+        }
+
         return self.requestHandler.handle(request: request)
       }
     )

@@ -89,18 +89,18 @@ enum CLI {
   /// Prints the command-line help text.
   static func printUsage() {
     let usageLines =
-      commandRegistry
-      .map(\.usageLine)
+      statusCommandRegistry
+      .map(statusCommandUsageLine)
       .joined(separator: "\n")
 
     let commandDescriptions =
-      commandRegistry
-      .map { formatOption($0.name, $0.help) }
+      statusCommandRegistry
+      .map { formatOption($0.command.rawValue, $0.help) }
       .joined(separator: "\n")
 
     let exampleLines =
       (["wifisnitchctl"]
-      + commandRegistry.compactMap(\.example)
+      + statusCommandRegistry.compactMap(\.example)
       + [
         "wifisnitchctl field wifi.ssid,wifi.bssid,wifi.channel --format=lines",
         "wifisnitchctl field wifi.snr,wifi.link_quality --format=lines",
@@ -111,7 +111,7 @@ enum CLI {
 
     let fieldLines =
       statusFieldRegistry
-      .map { formatOption($0.name, $0.help) }
+      .map { formatOption($0.field.rawValue, $0.help) }
       .joined(separator: "\n")
 
     let help = """

@@ -1,7 +1,7 @@
 import Foundation
 import WiFiSnitchShared
 
-/// Handles protocol requests and returns protocol responses.
+/// Handles structured protocol requests and returns structured protocol responses.
 struct StatusRequestHandler {
   private let wifiProvider: WiFiProvider
   private let networkProvider: NetworkStateProvider
@@ -24,85 +24,75 @@ struct StatusRequestHandler {
     self.encoder = encoder
   }
 
-  /// Parses and handles a single protocol request.
-  func handle(request: String) -> String {
-    let trimmed = request.trimmingCharacters(in: .whitespacesAndNewlines)
-    let components = trimmed.split(separator: " ").map(String.init)
-
-    guard let rawCommand = components.first, !rawCommand.isEmpty else {
-      return "ERR empty_request"
-    }
-
-    let command = rawCommand.lowercased()
-    let args = Array(components.dropFirst())
+  /// Parses and handles a single structured request.
+  func handle(request: StatusAgentRequest) -> StatusAgentResponse {
     let payload = currentPayload()
 
-    switch command {
-    case "ping":
-      return "PONG"
+    switch request.command {
+    case .ping:
+      return StatusAgentResponse(body: "PONG")
 
-    case "version":
-      return encoder.encodeJSON([
-        "app_version": appVersion,
-        "protocol_version": protocolVersion,
-      ])
+    case .version:
+      return StatusAgentResponse(
+        body: encoder.encodeJSON([
+          "app_version": appVersion,
+          "protocol_version": protocolVersion,
+        ])
+      )
 
-    case "fields":
-      return statusFieldRegistry.map(\.name).joined(separator: "\n")
+    case .fields:
+      return StatusAgentResponse(
+        body: statusFieldRegistry.map(\.field.rawValue).joined(separator: "\n")
+      )
 
-    case "formats":
-      return "text\njson\nlines"
+    case .formats:
+      return StatusAgentResponse(body: "text\njson\nlines")
 
-    case "ssid":
-      return payload.wifi.ssid.map { "OK \($0)" } ?? "EMPTY"
+    case .ssid:
+      return StatusAgentResponse(body: payload.wifi.ssid.map { "OK \($0)" } ?? "EMPTY")
 
-    case "status":
-      guard let format = parseFormat(from: args) else {
-        return "ERR unknown_argument"
+    case .status:
+      return StatusAgentResponse(
+        body: encoder.encodeStatus(payload, format: request.format ?? .json)
+      )
+
+    case .wifi:
+      return StatusAgentResponse(body: encoder.encodeJSON(payload.wifi))
+
+    case .network:
+      return StatusAgentResponse(body: encoder.encodeJSON(payload.network))
+
+    case .auth:
+      return StatusAgentResponse(body: encoder.encodeJSON(payload.auth))
+
+    case .signal:
+      return StatusAgentResponse(
+        body: encoder.encodeJSON(
+          SignalPayload(
+            rssi: payload.wifi.rssi,
+            noise: payload.wifi.noise,
+            snr: payload.wifi.snr,
+            linkQuality: payload.wifi.linkQuality,
+            txRate: payload.wifi.txRate
+          )
+        )
+      )
+
+    case .debug:
+      return StatusAgentResponse(body: encoder.encodeJSON(debugStatus()))
+
+    case .field:
+      guard !request.fields.isEmpty else {
+        return StatusAgentResponse(body: "ERR missing_field")
       }
 
-      return encoder.encodeStatus(payload, format: format)
-
-    case "wifi":
-      return encoder.encodeJSON(payload.wifi)
-
-    case "network":
-      return encoder.encodeJSON(payload.network)
-
-    case "auth":
-      return encoder.encodeJSON(payload.auth)
-
-    case "signal":
-      return encoder.encodeJSON(
-        SignalPayload(
-          rssi: payload.wifi.rssi,
-          noise: payload.wifi.noise,
-          snr: payload.wifi.snr,
-          linkQuality: payload.wifi.linkQuality,
-          txRate: payload.wifi.txRate
-        ))
-
-    case "debug":
-      guard args.isEmpty else {
-        return "ERR unknown_argument"
-      }
-
-      return encoder.encodeJSON(debugStatus())
-
-    case "field":
-      guard let fieldSpec = args.first, !fieldSpec.isEmpty else {
-        return "ERR missing_field"
-      }
-
-      guard let format = parseFormat(from: Array(args.dropFirst())) else {
-        return "ERR unknown_argument"
-      }
-
-      let fields = fieldSpec.split(separator: ",").map(String.init)
-      return encoder.encodeFields(payload, fields: fields, format: format)
-
-    default:
-      return "ERR unknown_command"
+      return StatusAgentResponse(
+        body: encoder.encodeFields(
+          payload,
+          fields: request.fields,
+          format: request.format ?? .json
+        )
+      )
     }
   }
 
@@ -159,25 +149,5 @@ struct StatusRequestHandler {
     }
 
     return result
-  }
-
-  /// Parses format options from command arguments.
-  private func parseFormat(from args: [String]) -> ResponseFormat? {
-    var format: ResponseFormat = .json
-
-    for arg in args {
-      switch arg.lowercased() {
-      case "--format=text":
-        format = .text
-      case "--format=lines":
-        format = .lines
-      case "--format=json":
-        format = .json
-      default:
-        return nil
-      }
-    }
-
-    return format
   }
 }

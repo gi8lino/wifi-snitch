@@ -1,6 +1,15 @@
 {
-  "originHash" : "d9c21fc3d3a0cc1b15860075b59d14fd4b2babe5a7dc9d1a5206d8bc9e38b471",
+  "originHash" : "645b246ebf80d098d66314f032ff4e0cf699594d23f926d23a5dcf0badb842e9",
   "pins" : [
+    {
+      "identity" : "easybar",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gi8lino/easybar.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "edd383928e165ba02eef5a3d0dd13064df593b54"
+      }
+    },
     {
       "identity" : "tomlkit",
       "kind" : "remoteSourceControl",

@@ -28,6 +28,7 @@ public enum StatusCommand: String, Codable, CaseIterable {
 /// This enum is the single source of truth for field names used by the
 /// protocol, CLI help, and agent-side field validation.
 public enum StatusField: String, Codable, CaseIterable {
+  case networkGeneratedAt = "network.generated_at"
   case wifiSSID = "wifi.ssid"
   case wifiBSSID = "wifi.bssid"
   case wifiInterface = "wifi.interface"
@@ -78,6 +79,7 @@ public struct StatusFieldSpec {
 
 /// Ordered protocol field metadata shared by the agent and CLI.
 public let statusFieldRegistry: [StatusFieldSpec] = [
+  .init(field: .networkGeneratedAt, help: "Snapshot generation time"),
   .init(field: .wifiSSID, help: "Current Wi-Fi network name"),
   .init(field: .wifiBSSID, help: "Current access point BSSID"),
   .init(field: .wifiInterface, help: "Wi-Fi interface name"),

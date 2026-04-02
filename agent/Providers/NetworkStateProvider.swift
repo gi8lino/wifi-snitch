@@ -3,11 +3,18 @@ import SystemConfiguration
 
 /// Watches the dynamic store and caches native network state.
 final class NetworkStateProvider {
+  private static let dateFormatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter
+  }()
+
   private let lock = NSLock()
   private var store: SCDynamicStore!
   private var source: CFRunLoopSource?
 
   private var cachedNetwork = NetworkPayload(
+    generatedAt: NetworkStateProvider.dateFormatter.string(from: Date()),
     primaryInterface: nil,
     activeTunnelInterface: nil,
     activeTunnelInterfaces: [],
@@ -100,6 +107,7 @@ final class NetworkStateProvider {
     else {
       lock.lock()
       cachedNetwork = NetworkPayload(
+        generatedAt: NetworkStateProvider.dateFormatter.string(from: Date()),
         primaryInterface: nil,
         activeTunnelInterface: nil,
         activeTunnelInterfaces: [],
@@ -190,6 +198,7 @@ final class NetworkStateProvider {
     let captivePortal = !internetReachable && ipv4Address != nil && defaultGateway != nil
 
     let network = NetworkPayload(
+      generatedAt: Self.dateFormatter.string(from: Date()),
       primaryInterface: primaryInterface,
       activeTunnelInterface: activeTunnelInterface,
       activeTunnelInterfaces: tunnelInterfaces,

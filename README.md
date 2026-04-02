@@ -28,6 +28,7 @@ WiFiSnitch is intentionally narrow:
 - IPv4, IPv6, default gateway, and DNS servers
 - internet reachability and captive portal hints
 - location authorization state
+- snapshot generation timestamp
 
 ## Install
 
@@ -179,6 +180,7 @@ Formats:
 
 Available fields:
 
+- `network.generated_at`
 - `wifi.ssid`
 - `wifi.bssid`
 - `wifi.interface`
@@ -216,6 +218,14 @@ Available fields:
 ## Output shape
 
 `status` returns the full default payload as JSON.
+
+`field ... --format=json` returns typed JSON values, not stringified ones.
+
+Examples:
+
+- booleans stay booleans
+- integers stay integers
+- DNS and tunnel interface lists stay arrays
 
 Example:
 

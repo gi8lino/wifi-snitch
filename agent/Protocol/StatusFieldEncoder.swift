@@ -6,9 +6,10 @@ struct StatusFieldEncoder {
   private let availableFields = Set(StatusField.allCases)
 
   /// Flattens the status payload into dot-separated fields.
-  func flatten(_ payload: StatusPayload) -> [String: String] {
-    var result: [String: String] = [:]
+  func flatten(_ payload: StatusPayload) -> [String: StatusFieldValue] {
+    var result: [String: StatusFieldValue] = [:]
 
+    put(&result, .networkGeneratedAt, payload.network.generatedAt)
     put(&result, .wifiSSID, payload.wifi.ssid)
     put(&result, .wifiBSSID, payload.wifi.bssid)
     put(&result, .wifiInterface, payload.wifi.interface)
@@ -57,7 +58,7 @@ struct StatusFieldEncoder {
     case .lines:
       return flatten(payload)
         .sorted(by: { $0.key < $1.key })
-        .map { "\($0.key)=\($0.value)" }
+        .map { "\($0.key)=\($0.value.rendered)" }
         .joined(separator: "\n")
 
     case .text:
@@ -80,13 +81,14 @@ struct StatusFieldEncoder {
       guard fields.count == 1 else {
         return "ERR text_requires_single_field"
       }
-      return flat[fields[0].rawValue] ?? "EMPTY"
+      return flat[fields[0].rawValue]?.rendered ?? "EMPTY"
 
     case .lines:
-      return fields.map { "\($0.rawValue)=\(flat[$0.rawValue] ?? "")" }.joined(separator: "\n")
+      return fields.map { "\($0.rawValue)=\(flat[$0.rawValue]?.rendered ?? "")" }.joined(
+        separator: "\n")
 
     case .json:
-      var dict: [String: String] = [:]
+      var dict: [String: StatusFieldValue] = [:]
 
       for field in fields {
         if let value = flat[field.rawValue] {
@@ -113,19 +115,28 @@ struct StatusFieldEncoder {
   }
 
   /// Stores an optional scalar value in a flattened field map.
-  private func put<T>(_ dict: inout [String: String], _ field: StatusField, _ value: T?) {
+  private func put(_ dict: inout [String: StatusFieldValue], _ field: StatusField, _ value: String?)
+  {
     guard let value else { return }
-    dict[field.rawValue] = String(describing: value)
+    dict[field.rawValue] = .string(value)
   }
 
   /// Stores an optional Boolean value in a flattened field map.
-  private func put(_ dict: inout [String: String], _ field: StatusField, _ value: Bool?) {
+  private func put(_ dict: inout [String: StatusFieldValue], _ field: StatusField, _ value: Bool?)
+  {
     guard let value else { return }
-    dict[field.rawValue] = value ? "true" : "false"
+    dict[field.rawValue] = .bool(value)
+  }
+
+  /// Stores an optional integer value in a flattened field map.
+  private func put(_ dict: inout [String: StatusFieldValue], _ field: StatusField, _ value: Int?) {
+    guard let value else { return }
+    dict[field.rawValue] = .int(value)
   }
 
   /// Stores a string list in a flattened field map.
-  private func put(_ dict: inout [String: String], _ field: StatusField, _ value: [String]) {
-    dict[field.rawValue] = value.joined(separator: ",")
+  private func put(_ dict: inout [String: StatusFieldValue], _ field: StatusField, _ value: [String])
+  {
+    dict[field.rawValue] = .stringList(value)
   }
 }

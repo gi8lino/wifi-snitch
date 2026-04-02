@@ -8,7 +8,7 @@ struct StatusRequestHandler {
   private let authState: AuthState
   private let encoder: StatusFieldEncoder
 
-  private let protocolVersion = "1"
+  private let protocolVersion = "2"
   private let appVersion = BuildInfo.appVersion
 
   /// Creates a request handler with all providers.
@@ -115,6 +115,7 @@ struct StatusRequestHandler {
 
     var result: [String: String] = [
       "socket_path": defaultSocketPath(),
+      "network_generated_at": payload.network.generatedAt,
       "location_authorized": payload.auth.locationAuthorized ? "true" : "false",
       "location_permission_state": payload.auth.locationPermissionState,
       "ssid_raw": String(describing: payload.wifi.ssid),

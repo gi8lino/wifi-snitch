@@ -55,6 +55,7 @@ struct WiFiPayload: Encodable {
 }
 
 struct NetworkPayload: Encodable {
+  let generatedAt: String
   let primaryInterface: String?
   let activeTunnelInterface: String?
   let activeTunnelInterfaces: [String]
@@ -67,6 +68,7 @@ struct NetworkPayload: Encodable {
   let captivePortal: Bool
 
   enum CodingKeys: String, CodingKey {
+    case generatedAt = "generated_at"
     case primaryInterface = "primary_interface"
     case activeTunnelInterface = "active_tunnel_interface"
     case activeTunnelInterfaces = "active_tunnel_interfaces"

@@ -2,16 +2,18 @@
 
 WiFiSnitch is a small macOS helper app that exposes Wi-Fi and network status over a local Unix socket.
 
-It exists because recent macOS versions often hide the current SSID and related Wi-Fi details from normal shell scripts. WiFiSnitch runs in the user session, requests the required location permission, and makes the result available to local tools like SketchyBar.
+It ships with a small CLI client, `wifisnitchctl`, so the data can be queried easily from shell scripts, status bars like Easybar, SketchyBar, and other local automation.
+
+It exists because recent macOS versions often hide the current SSID and related Wi-Fi details from normal shell scripts. WiFiSnitch runs in the user session, requests the required location permission, and makes the result available to local tools in a simple, script-friendly way.
 
 ## Scope
 
 WiFiSnitch is intentionally narrow:
 
 - Wi-Fi data that is awkward to access from shell scripts on modern macOS
-- network and tunnel status that is useful in bars and small scripts
+- network and tunnel status that is useful in bars, scripts, and local automation
 - a tiny local socket protocol
-- a small CLI client
+- a small CLI client for querying the socket
 - a Homebrew-friendly app and service workflow
 
 ## Features

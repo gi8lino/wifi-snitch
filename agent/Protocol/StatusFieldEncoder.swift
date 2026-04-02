@@ -122,8 +122,7 @@ struct StatusFieldEncoder {
   }
 
   /// Stores an optional Boolean value in a flattened field map.
-  private func put(_ dict: inout [String: StatusFieldValue], _ field: StatusField, _ value: Bool?)
-  {
+  private func put(_ dict: inout [String: StatusFieldValue], _ field: StatusField, _ value: Bool?) {
     guard let value else { return }
     dict[field.rawValue] = .bool(value)
   }
@@ -135,8 +134,9 @@ struct StatusFieldEncoder {
   }
 
   /// Stores a string list in a flattened field map.
-  private func put(_ dict: inout [String: StatusFieldValue], _ field: StatusField, _ value: [String])
-  {
+  private func put(
+    _ dict: inout [String: StatusFieldValue], _ field: StatusField, _ value: [String]
+  ) {
     dict[field.rawValue] = .stringList(value)
   }
 }

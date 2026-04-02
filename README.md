@@ -112,6 +112,13 @@ wifisnitchctl field auth.location_authorized --format=text
 wifisnitchctl field auth.location_permission_state --format=text
 ```
 
+When location access is unavailable:
+
+- Wi-Fi-specific commands like `ssid`, `wifi`, and `signal` return `ERR permission_denied:<state>`
+- `field ...` returns the same error if any requested field starts with `wifi.`
+- `status` still works, but its Wi-Fi section is redacted
+- non-sensitive `network.*` and `auth.*` fields still work
+
 ## Usage
 
 Show help:

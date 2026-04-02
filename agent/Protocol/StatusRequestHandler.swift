@@ -27,6 +27,8 @@ struct StatusRequestHandler {
   /// Parses and handles a single structured request.
   func handle(request: StatusAgentRequest) -> StatusAgentResponse {
     let payload = currentPayload()
+    let effectivePayload = effectivePayload(from: payload)
+    let permissionState = payload.auth.locationPermissionState
 
     switch request.command {
     case .ping:
@@ -49,14 +51,22 @@ struct StatusRequestHandler {
       return StatusAgentResponse(body: "text\njson\nlines")
 
     case .ssid:
+      guard payload.auth.locationAuthorized else {
+        return permissionDeniedResponse(permissionState: permissionState)
+      }
+
       return StatusAgentResponse(body: payload.wifi.ssid.map { "OK \($0)" } ?? "EMPTY")
 
     case .status:
       return StatusAgentResponse(
-        body: encoder.encodeStatus(payload, format: request.format ?? .json)
+        body: encoder.encodeStatus(effectivePayload, format: request.format ?? .json)
       )
 
     case .wifi:
+      guard payload.auth.locationAuthorized else {
+        return permissionDeniedResponse(permissionState: permissionState)
+      }
+
       return StatusAgentResponse(body: encoder.encodeJSON(payload.wifi))
 
     case .network:
@@ -66,6 +76,10 @@ struct StatusRequestHandler {
       return StatusAgentResponse(body: encoder.encodeJSON(payload.auth))
 
     case .signal:
+      guard payload.auth.locationAuthorized else {
+        return permissionDeniedResponse(permissionState: permissionState)
+      }
+
       return StatusAgentResponse(
         body: encoder.encodeJSON(
           SignalPayload(
@@ -79,16 +93,21 @@ struct StatusRequestHandler {
       )
 
     case .debug:
-      return StatusAgentResponse(body: encoder.encodeJSON(debugStatus()))
+      return StatusAgentResponse(body: encoder.encodeJSON(debugStatus(payload: effectivePayload)))
 
     case .field:
       guard !request.fields.isEmpty else {
         return StatusAgentResponse(body: "ERR missing_field")
       }
 
+      guard payload.auth.locationAuthorized || !request.fields.contains(where: requiresLocationAuthorization)
+      else {
+        return permissionDeniedResponse(permissionState: permissionState)
+      }
+
       return StatusAgentResponse(
         body: encoder.encodeFields(
-          payload,
+          effectivePayload,
           fields: request.fields,
           format: request.format ?? .json
         )
@@ -108,9 +127,51 @@ struct StatusRequestHandler {
     )
   }
 
+  /// Returns one payload with Wi-Fi-sensitive fields removed when auth is unavailable.
+  private func effectivePayload(from payload: StatusPayload) -> StatusPayload {
+    guard !payload.auth.locationAuthorized else { return payload }
+
+    return StatusPayload(
+      wifi: WiFiPayload(
+        ssid: nil,
+        bssid: nil,
+        interface: nil,
+        hardwareAddress: nil,
+        power: nil,
+        serviceActive: nil,
+        rssi: nil,
+        noise: nil,
+        snr: nil,
+        linkQuality: nil,
+        txRate: nil,
+        channel: nil,
+        channelBand: nil,
+        channelWidth: nil,
+        security: nil,
+        phyMode: nil,
+        interfaceMode: nil,
+        countryCode: nil,
+        roaming: false,
+        ssidChangedAt: nil,
+        interfaceChangedAt: nil
+      ),
+      network: payload.network,
+      auth: payload.auth
+    )
+  }
+
+  /// Returns whether a requested field depends on location authorization.
+  private func requiresLocationAuthorization(_ field: StatusField) -> Bool {
+    field.rawValue.hasPrefix("wifi.")
+  }
+
+  /// Returns one permission-denied response.
+  private func permissionDeniedResponse(permissionState: String) -> StatusAgentResponse {
+    StatusAgentResponse(body: "ERR permission_denied:\(permissionState)")
+  }
+
   /// Builds debug data from all providers.
-  private func debugStatus() -> [String: String] {
-    let payload = currentPayload()
+  private func debugStatus(payload: StatusPayload) -> [String: String] {
     let networkDebug = networkProvider.debugInfo()
 
     var result: [String: String] = [

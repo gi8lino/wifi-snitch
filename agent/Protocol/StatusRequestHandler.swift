@@ -5,7 +5,7 @@ import WiFiSnitchShared
 struct StatusRequestHandler {
   private let wifiProvider: WiFiProvider
   private let networkProvider: NetworkStateProvider
-  private let authState: AuthState
+  private let authState: NetworkAgentAuthorizationState
   private let encoder: StatusFieldEncoder
 
   private let protocolVersion = "2"
@@ -15,7 +15,7 @@ struct StatusRequestHandler {
   init(
     wifiProvider: WiFiProvider,
     networkProvider: NetworkStateProvider,
-    authState: AuthState,
+    authState: NetworkAgentAuthorizationState,
     encoder: StatusFieldEncoder
   ) {
     self.wifiProvider = wifiProvider

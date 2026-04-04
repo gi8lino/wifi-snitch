@@ -6,7 +6,7 @@ import WiFiSnitchShared
 
 final class AppController: NSObject, CLLocationManagerDelegate {
   private let locationManager = CLLocationManager()
-  private let authState = AuthState()
+  private let authState = NetworkAgentAuthorizationState()
   private let retryBackoff = AuthorizationRetryBackoff()
 
   private let wifiProvider = WiFiProvider()

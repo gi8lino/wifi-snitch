@@ -1,9 +1,17 @@
 import Foundation
+import WiFiSnitchShared
 
 struct StatusPayload: Encodable {
   let wifi: WiFiPayload
   let network: NetworkPayload
   let auth: AuthPayload
+
+  /// Builds one payload from flattened field values.
+  init(fieldValues: [String: StatusFieldValue]) {
+    wifi = WiFiPayload(fieldValues: fieldValues)
+    network = NetworkPayload(fieldValues: fieldValues)
+    auth = AuthPayload(fieldValues: fieldValues)
+  }
 }
 
 struct WiFiPayload: Encodable {
@@ -53,31 +61,29 @@ struct WiFiPayload: Encodable {
     case interfaceChangedAt = "interface_changed_at"
   }
 
-  /// Returns one payload with location-protected Wi-Fi values removed.
-  func redactedForUnauthorizedAccess() -> WiFiPayload {
-    WiFiPayload(
-      ssid: nil,
-      bssid: nil,
-      interface: nil,
-      hardwareAddress: nil,
-      power: nil,
-      serviceActive: nil,
-      rssi: nil,
-      noise: nil,
-      snr: nil,
-      linkQuality: nil,
-      txRate: nil,
-      channel: nil,
-      channelBand: nil,
-      channelWidth: nil,
-      security: nil,
-      phyMode: nil,
-      interfaceMode: nil,
-      countryCode: nil,
-      roaming: false,
-      ssidChangedAt: nil,
-      interfaceChangedAt: nil
-    )
+  /// Builds one Wi-Fi payload from flattened field values.
+  init(fieldValues: [String: StatusFieldValue]) {
+    ssid = fieldValues[StatusField.wifiSSID.rawValue]?.stringValue
+    bssid = fieldValues[StatusField.wifiBSSID.rawValue]?.stringValue
+    interface = fieldValues[StatusField.wifiInterface.rawValue]?.stringValue
+    hardwareAddress = fieldValues[StatusField.wifiHardwareAddress.rawValue]?.stringValue
+    power = fieldValues[StatusField.wifiPower.rawValue]?.boolValue
+    serviceActive = fieldValues[StatusField.wifiServiceActive.rawValue]?.boolValue
+    rssi = fieldValues[StatusField.wifiRSSI.rawValue]?.intValue
+    noise = fieldValues[StatusField.wifiNoise.rawValue]?.intValue
+    snr = fieldValues[StatusField.wifiSNR.rawValue]?.intValue
+    linkQuality = fieldValues[StatusField.wifiLinkQuality.rawValue]?.intValue
+    txRate = fieldValues[StatusField.wifiTxRate.rawValue]?.intValue
+    channel = fieldValues[StatusField.wifiChannel.rawValue]?.intValue
+    channelBand = fieldValues[StatusField.wifiChannelBand.rawValue]?.stringValue
+    channelWidth = fieldValues[StatusField.wifiChannelWidth.rawValue]?.stringValue
+    security = fieldValues[StatusField.wifiSecurity.rawValue]?.stringValue
+    phyMode = fieldValues[StatusField.wifiPhyMode.rawValue]?.stringValue
+    interfaceMode = fieldValues[StatusField.wifiInterfaceMode.rawValue]?.stringValue
+    countryCode = fieldValues[StatusField.wifiCountryCode.rawValue]?.stringValue
+    roaming = fieldValues[StatusField.wifiRoaming.rawValue]?.boolValue ?? false
+    ssidChangedAt = fieldValues[StatusField.wifiSSIDChangedAt.rawValue]?.stringValue
+    interfaceChangedAt = fieldValues[StatusField.wifiInterfaceChangedAt.rawValue]?.stringValue
   }
 }
 
@@ -107,6 +113,27 @@ struct NetworkPayload: Encodable {
     case internetReachable = "internet_reachable"
     case captivePortal = "captive_portal"
   }
+
+  /// Builds one network payload from flattened field values.
+  init(fieldValues: [String: StatusFieldValue]) {
+    generatedAt =
+      fieldValues[StatusField.networkGeneratedAt.rawValue]?.stringValue
+      ?? ISO8601DateFormatter().string(from: Date())
+    primaryInterface = fieldValues[StatusField.networkPrimaryInterface.rawValue]?.stringValue
+    activeTunnelInterface =
+      fieldValues[StatusField.networkActiveTunnelInterface.rawValue]?.stringValue
+    activeTunnelInterfaces =
+      fieldValues[StatusField.networkActiveTunnelInterfaces.rawValue]?.stringListValue ?? []
+    primaryInterfaceIsTunnel =
+      fieldValues[StatusField.networkPrimaryInterfaceIsTunnel.rawValue]?.boolValue ?? false
+    ipv4Address = fieldValues[StatusField.networkIPv4Address.rawValue]?.stringValue
+    ipv6Address = fieldValues[StatusField.networkIPv6Address.rawValue]?.stringValue
+    defaultGateway = fieldValues[StatusField.networkDefaultGateway.rawValue]?.stringValue
+    dnsServers = fieldValues[StatusField.networkDNSServers.rawValue]?.stringListValue ?? []
+    internetReachable =
+      fieldValues[StatusField.networkInternetReachable.rawValue]?.boolValue ?? false
+    captivePortal = fieldValues[StatusField.networkCaptivePortal.rawValue]?.boolValue ?? false
+  }
 }
 
 struct AuthPayload: Encodable {
@@ -116,6 +143,14 @@ struct AuthPayload: Encodable {
   enum CodingKeys: String, CodingKey {
     case locationAuthorized = "location_authorized"
     case locationPermissionState = "location_permission_state"
+  }
+
+  /// Builds one auth payload from flattened field values.
+  init(fieldValues: [String: StatusFieldValue]) {
+    locationAuthorized =
+      fieldValues[StatusField.authLocationAuthorized.rawValue]?.boolValue ?? false
+    locationPermissionState =
+      fieldValues[StatusField.authLocationPermissionState.rawValue]?.stringValue ?? "unknown"
   }
 }
 

@@ -4,9 +4,9 @@ import Foundation
 /// Shared typed field value used by the WiFiSnitch agent.
 public typealias StatusFieldValue = NetworkAgentFieldValue
 
-public extension NetworkAgentFieldValue {
+extension NetworkAgentFieldValue {
   /// Returns the string representation used by text and line output.
-  var rendered: String {
+  public var rendered: String {
     switch self {
     case .string(let value):
       return value

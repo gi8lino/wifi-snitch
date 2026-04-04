@@ -1,11 +1,10 @@
+import EasyBarNetworkAgentCore
 import Foundation
 import WiFiSnitchShared
 
 /// Handles structured protocol requests and returns structured protocol responses.
 struct StatusRequestHandler {
-  private let wifiProvider: WiFiProvider
-  private let networkProvider: NetworkStateProvider
-  private let authState: NetworkAgentAuthorizationState
+  private let snapshotProvider: NetworkSnapshotProvider
   private let encoder: StatusFieldEncoder
 
   private let protocolVersion = "2"
@@ -13,21 +12,16 @@ struct StatusRequestHandler {
 
   /// Creates a request handler with all providers.
   init(
-    wifiProvider: WiFiProvider,
-    networkProvider: NetworkStateProvider,
-    authState: NetworkAgentAuthorizationState,
+    snapshotProvider: NetworkSnapshotProvider,
     encoder: StatusFieldEncoder
   ) {
-    self.wifiProvider = wifiProvider
-    self.networkProvider = networkProvider
-    self.authState = authState
+    self.snapshotProvider = snapshotProvider
     self.encoder = encoder
   }
 
   /// Parses and handles a single structured request.
   func handle(request: StatusAgentRequest) -> StatusAgentResponse {
     let payload = currentPayload()
-    let effectivePayload = effectivePayload(from: payload)
     let permissionState = payload.auth.locationPermissionState
 
     switch request.command {
@@ -59,7 +53,7 @@ struct StatusRequestHandler {
 
     case .status:
       return StatusAgentResponse(
-        body: encoder.encodeStatus(effectivePayload, format: request.format ?? .json)
+        body: encoder.encodeStatus(payload, format: request.format ?? .json)
       )
 
     case .wifi:
@@ -93,7 +87,7 @@ struct StatusRequestHandler {
       )
 
     case .debug:
-      return StatusAgentResponse(body: encoder.encodeJSON(debugStatus(payload: effectivePayload)))
+      return StatusAgentResponse(body: encoder.encodeJSON(debugStatus(payload: payload)))
 
     case .field:
       guard !request.fields.isEmpty else {
@@ -107,7 +101,7 @@ struct StatusRequestHandler {
 
       return StatusAgentResponse(
         body: encoder.encodeFields(
-          effectivePayload,
+          payload,
           fields: request.fields,
           format: request.format ?? .json
         )
@@ -117,30 +111,22 @@ struct StatusRequestHandler {
 
   /// Builds the current full status payload.
   private func currentPayload() -> StatusPayload {
-    StatusPayload(
-      wifi: wifiProvider.currentSnapshot(),
-      network: networkProvider.currentNetwork(),
-      auth: AuthPayload(
-        locationAuthorized: authState.isAuthorized(),
-        locationPermissionState: authState.permissionState()
-      )
-    )
-  }
-
-  /// Returns one payload with Wi-Fi-sensitive fields removed when auth is unavailable.
-  private func effectivePayload(from payload: StatusPayload) -> StatusPayload {
-    guard !payload.auth.locationAuthorized else { return payload }
-
-    return StatusPayload(
-      wifi: payload.wifi.redactedForUnauthorizedAccess(),
-      network: payload.network,
-      auth: payload.auth
-    )
+    let values = currentFieldValues()
+    return StatusPayload(fieldValues: values)
   }
 
   /// Returns whether a requested field depends on location authorization.
   private func requiresLocationAuthorization(_ field: StatusField) -> Bool {
     field.rawValue.hasPrefix("wifi.")
+  }
+
+  /// Returns the current field values with unauthorized Wi-Fi fields filtered out.
+  private func currentFieldValues() -> [String: StatusFieldValue] {
+    let response = snapshotProvider.responseFields(
+      for: Array(StatusField.allCases),
+      allowUnauthorizedNonSensitiveFields: true
+    )
+    return response.values ?? [:]
   }
 
   /// Returns one permission-denied response.
@@ -150,8 +136,6 @@ struct StatusRequestHandler {
 
   /// Builds debug data from all providers.
   private func debugStatus(payload: StatusPayload) -> [String: String] {
-    let networkDebug = networkProvider.debugInfo()
-
     var result: [String: String] = [
       "socket_path": defaultSocketPath(),
       "network_generated_at": payload.network.generatedAt,
@@ -182,11 +166,13 @@ struct StatusRequestHandler {
       "active_tunnel_interface": String(describing: payload.network.activeTunnelInterface),
       "active_tunnel_interfaces": payload.network.activeTunnelInterfaces.joined(separator: ","),
       "primary_interface_is_tunnel": payload.network.primaryInterfaceIsTunnel ? "true" : "false",
+      "network_ipv4_address": payload.network.ipv4Address ?? "",
+      "network_ipv6_address": payload.network.ipv6Address ?? "",
+      "network_default_gateway": payload.network.defaultGateway ?? "",
+      "network_dns_servers": payload.network.dnsServers.joined(separator: ","),
+      "network_internet_reachable": payload.network.internetReachable ? "true" : "false",
+      "network_captive_portal": payload.network.captivePortal ? "true" : "false",
     ]
-
-    for (key, value) in networkDebug {
-      result[key] = value
-    }
 
     return result
   }

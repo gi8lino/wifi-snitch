@@ -11,7 +11,7 @@ let package = Package(
     .executable(name: "wifisnitchctl", targets: ["wifisnitchctl"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/gi8lino/easybar.git", from: "0.0.77")
+    .package(path: "../easybar")
   ],
   targets: [
     .target(
@@ -26,6 +26,7 @@ let package = Package(
       dependencies: [
         "WiFiSnitchShared",
         .product(name: "EasyBarShared", package: "easybar"),
+        .product(name: "EasyBarNetworkAgentCore", package: "easybar"),
       ],
       path: "agent"
     ),

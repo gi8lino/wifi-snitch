@@ -16,6 +16,9 @@ let package = Package(
   targets: [
     .target(
       name: "WiFiSnitchShared",
+      dependencies: [
+        .product(name: "EasyBarShared", package: "easybar"),
+      ],
       path: "shared"
     ),
     .executableTarget(

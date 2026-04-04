@@ -1,3 +1,4 @@
+import EasyBarShared
 import Foundation
 
 /// Supported output formats for status responses.
@@ -23,102 +24,52 @@ public enum StatusCommand: String, Codable, CaseIterable {
   case field
 }
 
-/// Supported WiFiSnitch field keys.
-///
-/// This enum is the single source of truth for field names used by the
-/// protocol, CLI help, and agent-side field validation.
-public enum StatusField: String, Codable, CaseIterable {
-  case networkGeneratedAt = "network.generated_at"
-  case wifiSSID = "wifi.ssid"
-  case wifiBSSID = "wifi.bssid"
-  case wifiInterface = "wifi.interface"
-  case wifiHardwareAddress = "wifi.hardware_address"
-  case wifiPower = "wifi.power"
-  case wifiServiceActive = "wifi.service_active"
-  case wifiRSSI = "wifi.rssi"
-  case wifiNoise = "wifi.noise"
-  case wifiSNR = "wifi.snr"
-  case wifiLinkQuality = "wifi.link_quality"
-  case wifiTxRate = "wifi.tx_rate"
-  case wifiChannel = "wifi.channel"
-  case wifiChannelBand = "wifi.channel_band"
-  case wifiChannelWidth = "wifi.channel_width"
-  case wifiSecurity = "wifi.security"
-  case wifiPhyMode = "wifi.phy_mode"
-  case wifiInterfaceMode = "wifi.interface_mode"
-  case wifiCountryCode = "wifi.country_code"
-  case wifiRoaming = "wifi.roaming"
-  case wifiSSIDChangedAt = "wifi.ssid_changed_at"
-  case wifiInterfaceChangedAt = "wifi.interface_changed_at"
+/// Shared field key used by the WiFiSnitch protocol.
+public typealias StatusField = NetworkAgentField
 
-  case networkPrimaryInterface = "network.primary_interface"
-  case networkActiveTunnelInterface = "network.active_tunnel_interface"
-  case networkActiveTunnelInterfaces = "network.active_tunnel_interfaces"
-  case networkPrimaryInterfaceIsTunnel = "network.primary_interface_is_tunnel"
-  case networkIPv4Address = "network.ipv4_address"
-  case networkIPv6Address = "network.ipv6_address"
-  case networkDefaultGateway = "network.default_gateway"
-  case networkDNSServers = "network.dns_servers"
-  case networkInternetReachable = "network.internet_reachable"
-  case networkCaptivePortal = "network.captive_portal"
+/// Shared field metadata used by the WiFiSnitch protocol.
+public typealias StatusFieldSpec = NetworkAgentFieldSpec
 
-  case authLocationAuthorized = "auth.location_authorized"
-  case authLocationPermissionState = "auth.location_permission_state"
+/// Ordered field metadata shared by the agent and CLI.
+public let statusFieldRegistry = networkAgentFieldRegistry
+
+/// Compatibility aliases that preserve existing WiFiSnitch field references.
+public extension NetworkAgentField {
+  static let networkGeneratedAt = Self.generatedAt
+  static let wifiSSID = Self.ssid
+  static let wifiBSSID = Self.bssid
+  static let wifiInterface = Self.interfaceName
+  static let wifiHardwareAddress = Self.hardwareAddress
+  static let wifiPower = Self.power
+  static let wifiServiceActive = Self.serviceActive
+  static let wifiRSSI = Self.rssi
+  static let wifiNoise = Self.noise
+  static let wifiSNR = Self.snr
+  static let wifiLinkQuality = Self.linkQuality
+  static let wifiTxRate = Self.txRate
+  static let wifiChannel = Self.channel
+  static let wifiChannelBand = Self.channelBand
+  static let wifiChannelWidth = Self.channelWidth
+  static let wifiSecurity = Self.security
+  static let wifiPhyMode = Self.phyMode
+  static let wifiInterfaceMode = Self.interfaceMode
+  static let wifiCountryCode = Self.countryCode
+  static let wifiRoaming = Self.roaming
+  static let wifiSSIDChangedAt = Self.ssidChangedAt
+  static let wifiInterfaceChangedAt = Self.interfaceChangedAt
+  static let networkPrimaryInterface = Self.primaryInterface
+  static let networkActiveTunnelInterface = Self.activeTunnelInterface
+  static let networkActiveTunnelInterfaces = Self.activeTunnelInterfaces
+  static let networkPrimaryInterfaceIsTunnel = Self.primaryInterfaceIsTunnel
+  static let networkIPv4Address = Self.ipv4Address
+  static let networkIPv6Address = Self.ipv6Address
+  static let networkDefaultGateway = Self.defaultGateway
+  static let networkDNSServers = Self.dnsServers
+  static let networkInternetReachable = Self.internetReachable
+  static let networkCaptivePortal = Self.captivePortal
+  static let authLocationAuthorized = Self.locationAuthorized
+  static let authLocationPermissionState = Self.locationPermissionState
 }
-
-/// Describes one protocol field shared by the agent and CLI.
-public struct StatusFieldSpec {
-  public let field: StatusField
-  public let help: String
-
-  public init(field: StatusField, help: String) {
-    self.field = field
-    self.help = help
-  }
-}
-
-/// Ordered protocol field metadata shared by the agent and CLI.
-public let statusFieldRegistry: [StatusFieldSpec] = [
-  .init(field: .networkGeneratedAt, help: "Snapshot generation time"),
-  .init(field: .wifiSSID, help: "Current Wi-Fi network name"),
-  .init(field: .wifiBSSID, help: "Current access point BSSID"),
-  .init(field: .wifiInterface, help: "Wi-Fi interface name"),
-  .init(field: .wifiHardwareAddress, help: "Wi-Fi hardware MAC address"),
-  .init(field: .wifiPower, help: "Wi-Fi power state"),
-  .init(field: .wifiServiceActive, help: "CoreWLAN service availability"),
-  .init(field: .wifiRSSI, help: "Received signal strength"),
-  .init(field: .wifiNoise, help: "Noise floor"),
-  .init(field: .wifiSNR, help: "Signal-to-noise ratio"),
-  .init(field: .wifiLinkQuality, help: "Derived link quality percent"),
-  .init(field: .wifiTxRate, help: "Transmit rate in Mbps"),
-  .init(field: .wifiChannel, help: "Current Wi-Fi channel"),
-  .init(field: .wifiChannelBand, help: "Channel band label"),
-  .init(field: .wifiChannelWidth, help: "Channel width label"),
-  .init(field: .wifiSecurity, help: "Current security mode"),
-  .init(field: .wifiPhyMode, help: "PHY mode label"),
-  .init(field: .wifiInterfaceMode, help: "Interface mode label"),
-  .init(field: .wifiCountryCode, help: "Current country code"),
-  .init(field: .wifiRoaming, help: "Roaming state"),
-  .init(field: .wifiSSIDChangedAt, help: "Last SSID change time"),
-  .init(field: .wifiInterfaceChangedAt, help: "Last interface change time"),
-
-  .init(field: .networkPrimaryInterface, help: "Primary network interface"),
-  .init(field: .networkActiveTunnelInterface, help: "First active tunnel interface"),
-  .init(field: .networkActiveTunnelInterfaces, help: "All active tunnel interfaces"),
-  .init(
-    field: .networkPrimaryInterfaceIsTunnel,
-    help: "Whether the primary interface is a tunnel"
-  ),
-  .init(field: .networkIPv4Address, help: "Primary IPv4 address"),
-  .init(field: .networkIPv6Address, help: "Primary IPv6 address"),
-  .init(field: .networkDefaultGateway, help: "Default gateway address"),
-  .init(field: .networkDNSServers, help: "Configured DNS servers"),
-  .init(field: .networkInternetReachable, help: "Internet reachability state"),
-  .init(field: .networkCaptivePortal, help: "Captive portal state"),
-
-  .init(field: .authLocationAuthorized, help: "Location authorization state"),
-  .init(field: .authLocationPermissionState, help: "Location permission label"),
-]
 
 /// Describes one shared command.
 public struct StatusCommandSpec {

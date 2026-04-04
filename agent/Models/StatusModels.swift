@@ -52,6 +52,33 @@ struct WiFiPayload: Encodable {
     case ssidChangedAt = "ssid_changed_at"
     case interfaceChangedAt = "interface_changed_at"
   }
+
+  /// Returns one payload with location-protected Wi-Fi values removed.
+  func redactedForUnauthorizedAccess() -> WiFiPayload {
+    WiFiPayload(
+      ssid: nil,
+      bssid: nil,
+      interface: nil,
+      hardwareAddress: nil,
+      power: nil,
+      serviceActive: nil,
+      rssi: nil,
+      noise: nil,
+      snr: nil,
+      linkQuality: nil,
+      txRate: nil,
+      channel: nil,
+      channelBand: nil,
+      channelWidth: nil,
+      security: nil,
+      phyMode: nil,
+      interfaceMode: nil,
+      countryCode: nil,
+      roaming: false,
+      ssidChangedAt: nil,
+      interfaceChangedAt: nil
+    )
+  }
 }
 
 struct NetworkPayload: Encodable {

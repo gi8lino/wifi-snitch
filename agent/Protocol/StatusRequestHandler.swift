@@ -132,29 +132,7 @@ struct StatusRequestHandler {
     guard !payload.auth.locationAuthorized else { return payload }
 
     return StatusPayload(
-      wifi: WiFiPayload(
-        ssid: nil,
-        bssid: nil,
-        interface: nil,
-        hardwareAddress: nil,
-        power: nil,
-        serviceActive: nil,
-        rssi: nil,
-        noise: nil,
-        snr: nil,
-        linkQuality: nil,
-        txRate: nil,
-        channel: nil,
-        channelBand: nil,
-        channelWidth: nil,
-        security: nil,
-        phyMode: nil,
-        interfaceMode: nil,
-        countryCode: nil,
-        roaming: false,
-        ssidChangedAt: nil,
-        interfaceChangedAt: nil
-      ),
+      wifi: payload.wifi.redactedForUnauthorizedAccess(),
       network: payload.network,
       auth: payload.auth
     )

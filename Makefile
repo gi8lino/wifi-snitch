@@ -1,7 +1,7 @@
 APP_NAME := WiFiSnitch
-APP_EXEC := WiFiSnitch
-AGENT_PRODUCT := WiFiSnitchAgent
-CLI_PRODUCT := wifisnitchctl
+APP_EXEC := wifisnitch-agent
+AGENT_PRODUCT := wifisnitch-agent
+CLI_PRODUCT := wifisnitch
 
 DIST_DIR := dist
 APP_BUNDLE := $(DIST_DIR)/$(APP_NAME).app
@@ -93,8 +93,8 @@ package: bundle ## Create the release ZIP consumed by the Homebrew formula.
 	@rm -rf "$(PACKAGE_STAGE)" "$(PACKAGE_ZIP)"
 	@mkdir -p "$(PACKAGE_STAGE)"
 	@cp -R "$(APP_BUNDLE)" "$(PACKAGE_STAGE)/WiFiSnitch.app"
-	@cp "$(CLI_BIN)" "$(PACKAGE_STAGE)/wifisnitchctl"
-	@cd "$(PACKAGE_STAGE)" && zip -qry "../$(PACKAGE_NAME)" "WiFiSnitch.app" "wifisnitchctl"
+	@cp "$(CLI_BIN)" "$(PACKAGE_STAGE)/wifisnitch"
+	@cd "$(PACKAGE_STAGE)" && zip -qry "../$(PACKAGE_NAME)" "WiFiSnitch.app" "wifisnitch"
 	@rm -rf "$(PACKAGE_STAGE)"
 	@echo "Created $(PACKAGE_ZIP)"
 
@@ -184,7 +184,6 @@ dev: prepare-version ## Fast debug run without bundling.
 stop: ## Stop Homebrew and local WiFiSnitch app instances.
 	@brew services stop wifisnitch >/dev/null 2>&1 || true
 	@pkill -x "$(APP_EXEC)" >/dev/null 2>&1 || true
-	@pkill -x "$(AGENT_PRODUCT)" >/dev/null 2>&1 || true
 	@pkill -f "$(abspath $(APP_BIN))" >/dev/null 2>&1 || true
 
 ##@ Cleanup

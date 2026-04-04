@@ -2,7 +2,7 @@
 
 WiFiSnitch is a small macOS helper app that exposes Wi-Fi and network status over a local Unix socket.
 
-It ships with a small CLI client, `wifisnitchctl`, so the data can be queried easily from shell scripts, status bars like Easybar, SketchyBar, and other local automation.
+It ships with a small CLI client, `wifisnitch`, so the data can be queried easily from shell scripts, status bars like Easybar, SketchyBar, and other local automation.
 
 It exists because recent macOS versions often hide the current SSID and related Wi-Fi details from normal shell scripts. WiFiSnitch runs in the user session, requests the required location permission, and makes the result available to local tools in a simple, script-friendly way.
 
@@ -51,8 +51,7 @@ brew install gi8lino/tap/wifisnitch
 This installs:
 
 - `WiFiSnitch.app` inside the Homebrew Cellar
-- `wifisnitch` to launch the app bundle executable
-- `wifisnitchctl` for CLI access to the local socket API
+- `wifisnitch` for CLI access to the local socket API
 
 Start it as a user service:
 
@@ -80,7 +79,7 @@ If macOS blocks the app or CLI with a Gatekeeper or malware verification warning
 
 ```bash
 xattr -dr com.apple.quarantine "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
-xattr -d com.apple.quarantine "$(command -v wifisnitchctl)"
+xattr -d com.apple.quarantine "$(command -v wifisnitch)"
 brew services start wifisnitch
 ```
 
@@ -110,8 +109,8 @@ Then allow location access in:
 You can verify the current state with:
 
 ```bash
-wifisnitchctl field auth.location_authorized --format=text
-wifisnitchctl field auth.location_permission_state --format=text
+wifisnitch field auth.location_authorized --format=text
+wifisnitch field auth.location_permission_state --format=text
 ```
 
 When location access is unavailable:
@@ -126,25 +125,25 @@ When location access is unavailable:
 Show help:
 
 ```bash
-wifisnitchctl --help
+wifisnitch --help
 ```
 
 Common examples:
 
 ```bash
-wifisnitchctl
-wifisnitchctl ssid
-wifisnitchctl status --format=lines
-wifisnitchctl wifi
-wifisnitchctl network
-wifisnitchctl debug
-wifisnitchctl field wifi.ssid --format=text
-wifisnitchctl field wifi.ssid,wifi.bssid,wifi.channel --format=lines
-wifisnitchctl field wifi.hardware_address,wifi.interface_mode --format=lines
-wifisnitchctl field network.primary_interface,network.active_tunnel_interface --format=lines
-wifisnitchctl field network.primary_interface_is_tunnel --format=text
-wifisnitchctl ping
-wifisnitchctl version
+wifisnitch
+wifisnitch ssid
+wifisnitch status --format=lines
+wifisnitch wifi
+wifisnitch network
+wifisnitch debug
+wifisnitch field wifi.ssid --format=text
+wifisnitch field wifi.ssid,wifi.bssid,wifi.channel --format=lines
+wifisnitch field wifi.hardware_address,wifi.interface_mode --format=lines
+wifisnitch field network.primary_interface,network.active_tunnel_interface --format=lines
+wifisnitch field network.primary_interface_is_tunnel --format=text
+wifisnitch ping
+wifisnitch version
 ```
 
 The socket path is:
@@ -296,7 +295,7 @@ Notes:
 Show the current Wi-Fi name:
 
 ```lua
-local handle = io.popen("wifisnitchctl field wifi.ssid --format=text")
+local handle = io.popen("wifisnitch field wifi.ssid --format=text")
 local output = handle and handle:read("*a") or ""
 if handle then handle:close() end
 
@@ -312,7 +311,7 @@ Read Wi-Fi plus tunnel info:
 
 ```lua
 local handle = io.popen(
-  "wifisnitchctl field wifi.ssid,network.active_tunnel_interface,network.primary_interface_is_tunnel --format=lines"
+  "wifisnitch field wifi.ssid,network.active_tunnel_interface,network.primary_interface_is_tunnel --format=lines"
 )
 local output = handle and handle:read("*a") or ""
 if handle then handle:close() end

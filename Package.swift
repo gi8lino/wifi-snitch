@@ -7,8 +7,8 @@ let package = Package(
     .macOS(.v14)
   ],
   products: [
-    .executable(name: "WiFiSnitchAgent", targets: ["WiFiSnitchAgent"]),
-    .executable(name: "wifisnitchctl", targets: ["wifisnitchctl"]),
+    .executable(name: "wifisnitch-agent", targets: ["WiFiSnitchAgent"]),
+    .executable(name: "wifisnitch", targets: ["WiFiSnitch"]),
   ],
   dependencies: [
     .package(path: "../easybar")
@@ -17,7 +17,7 @@ let package = Package(
     .target(
       name: "WiFiSnitchShared",
       dependencies: [
-        .product(name: "EasyBarShared", package: "easybar"),
+        .product(name: "EasyBarShared", package: "easybar")
       ],
       path: "shared"
     ),
@@ -31,7 +31,7 @@ let package = Package(
       path: "agent"
     ),
     .executableTarget(
-      name: "wifisnitchctl",
+      name: "WiFiSnitch",
       dependencies: [
         "WiFiSnitchShared",
         .product(name: "EasyBarShared", package: "easybar"),

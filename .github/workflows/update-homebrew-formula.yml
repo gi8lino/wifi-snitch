@@ -66,18 +66,13 @@ jobs:
 
             def install
               libexec.install "WiFiSnitch.app"
-              bin.install "wifisnitchctl"
-
-              (bin/"wifisnitch").write <<~SH
-                #!/bin/bash
-                exec "#{libexec}/WiFiSnitch.app/Contents/MacOS/WiFiSnitch" "\$@"
-              SH
+              bin.install "wifisnitch"
 
               (var/"log/wifisnitch").mkpath
             end
 
             service do
-              run [opt_bin/"wifisnitch"]
+              run [opt_libexec/"WiFiSnitch.app/Contents/MacOS/wifisnitch-agent"]
               environment_variables PATH: std_service_path_env, LANG: "en_US.UTF-8"
               keep_alive true
               process_type :interactive
@@ -87,7 +82,7 @@ jobs:
             end
 
             test do
-              assert_match "wifisnitchctl", shell_output("#{bin}/wifisnitchctl --help 2>&1")
+              assert_match "wifisnitch", shell_output("#{bin}/wifisnitch --help 2>&1")
             end
           end
           EOF

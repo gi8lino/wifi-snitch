@@ -45,8 +45,8 @@ jobs:
       - name: Verify bundled artifacts
         shell: bash
         run: |
-          file "dist/WiFiSnitch.app/Contents/MacOS/WiFiSnitch"
-          file "dist/wifisnitchctl"
+          file "dist/WiFiSnitch.app/Contents/MacOS/wifisnitch-agent"
+          file "dist/wifisnitch"
           test -f "dist/WiFiSnitch.app/Contents/Info.plist"
           test -f "dist/WiFiSnitch-${{ steps.version.outputs.version }}.zip"
 

@@ -72,7 +72,7 @@ jobs:
             end
 
             service do
-              run [opt_libexec/"WiFiSnitch.app/Contents/MacOS/wifisnitch-agent"]
+              run [opt_libexec/"WiFiSnitch.app/Contents/MacOS/WiFiSnitch"]
               environment_variables PATH: std_service_path_env, LANG: "en_US.UTF-8"
               keep_alive true
               process_type :interactive

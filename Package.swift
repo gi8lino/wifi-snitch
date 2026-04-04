@@ -7,7 +7,7 @@ let package = Package(
     .macOS(.v14)
   ],
   products: [
-    .executable(name: "wifisnitch-agent", targets: ["WiFiSnitchAgent"]),
+    .executable(name: "WiFiSnitch", targets: ["WiFiSnitchAgent"]),
     .executable(name: "wifisnitch", targets: ["WiFiSnitch"]),
   ],
   dependencies: [

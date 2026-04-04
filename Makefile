@@ -1,6 +1,6 @@
 APP_NAME := WiFiSnitch
-APP_EXEC := wifisnitch-agent
-AGENT_PRODUCT := wifisnitch-agent
+APP_EXEC := WiFiSnitch
+AGENT_PRODUCT := WiFiSnitch
 CLI_PRODUCT := wifisnitch
 
 DIST_DIR := dist

@@ -31,6 +31,7 @@ WiFiSnitch is intentionally narrow:
 - internet reachability and captive portal hints
 - location authorization state
 - snapshot generation timestamp
+- startup logging and duplicate-instance protection
 
 ## Install
 
@@ -289,6 +290,187 @@ Notes:
 - `network.captive_portal` is a cheap heuristic, not a captive portal login check.
 - `ssid` returns `OK <ssid>` or `EMPTY`.
 - `debug` returns extra internal state useful for troubleshooting.
+
+## Troubleshooting
+
+When something goes wrong, first check whether WiFiSnitch is running once, whether the service is healthy, and whether permission state is what you expect.
+
+### Quick checks
+
+Check the Homebrew service:
+
+```bash
+brew services list | grep wifisnitch
+```
+
+Check running processes:
+
+```bash
+pgrep -fl WiFiSnitch
+pgrep -fl wifisnitch
+```
+
+You should not have multiple app instances fighting over the same socket or permission flow.
+
+Check the CLI against the local agent:
+
+```bash
+wifisnitch ping
+wifisnitch version
+```
+
+If `ping` fails, the agent is probably not running, was blocked by macOS, or never finished startup.
+
+### Logs
+
+WiFiSnitch logs useful startup and permission information. If you enabled file logging, inspect the configured log directory.
+
+If you installed with Homebrew services, also inspect service logs:
+
+```bash
+tail -n 200 ~/Library/Logs/Homebrew/wifisnitch/*.log
+```
+
+If your machine writes Homebrew logs elsewhere, use `brew services info wifisnitch` to locate them.
+
+### Common problems and fixes
+
+#### WiFiSnitch is already running
+
+WiFiSnitch now uses a single-instance guard. If another instance already holds the startup lock, the second one exits and logs a warning.
+
+Detect duplicates with:
+
+```bash
+pgrep -fl WiFiSnitch
+```
+
+If you accidentally launched both the Homebrew service and a manual instance, stop the extra one and restart cleanly:
+
+```bash
+pkill -x WiFiSnitch || true
+brew services restart wifisnitch
+```
+
+If you are testing local builds, stop the service first so you do not mix manual and service runs.
+
+#### `wifisnitch ping` fails
+
+Check whether the service is actually running:
+
+```bash
+brew services list | grep wifisnitch
+```
+
+Try opening the app directly:
+
+```bash
+open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
+```
+
+Then retry:
+
+```bash
+wifisnitch ping
+```
+
+If the direct app launch works but the service does not, restart the service:
+
+```bash
+brew services restart wifisnitch
+```
+
+#### Permission stays unresolved or Wi-Fi fields are denied
+
+Check the permission state directly:
+
+```bash
+wifisnitch field auth.location_authorized --format=text
+wifisnitch field auth.location_permission_state --format=text
+```
+
+If the state is not what you expect, reset the permission and relaunch:
+
+```bash
+tccutil reset Location io.github.gi8lino.wifisnitch
+open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
+```
+
+Then allow location access in System Settings and retry your field queries.
+
+#### Wi-Fi-specific commands return `permission_denied`
+
+That usually means Location Services access is denied, restricted, or not yet granted.
+
+Useful checks:
+
+```bash
+wifisnitch ssid
+wifisnitch wifi
+wifisnitch field wifi.ssid --format=text
+wifisnitch field auth.location_permission_state --format=text
+```
+
+Expected behavior:
+
+- `wifi.*` fields are blocked without permission
+- `network.*` and `auth.*` fields still work
+- `status` still works but redacts Wi-Fi data
+
+If you changed permission settings, restart WiFiSnitch:
+
+```bash
+brew services restart wifisnitch
+```
+
+#### Service and manual app launch behave differently
+
+This usually means one of these:
+
+- different environment
+- duplicate instances
+- stale permission state in an older process
+- quarantine or launch blocking in one path but not the other
+
+Compare the two by:
+
+```bash
+brew services stop wifisnitch
+open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
+wifisnitch ping
+```
+
+If that works, the service path is the issue. Restart the service and inspect logs.
+
+#### Socket or stale process issues
+
+If the app was interrupted or multiple instances were launched, restarting cleanly usually fixes it:
+
+```bash
+brew services stop wifisnitch
+pkill -x WiFiSnitch || true
+brew services start wifisnitch
+```
+
+Then verify:
+
+```bash
+wifisnitch ping
+wifisnitch version
+```
+
+### Reset and recover
+
+A good clean recovery sequence is:
+
+```bash
+brew services stop wifisnitch
+pkill -x WiFiSnitch || true
+brew services start wifisnitch
+wifisnitch ping
+```
+
+If permission still looks wrong after that, also reset Location Services permission and relaunch the app once manually.
 
 ## Lua example
 

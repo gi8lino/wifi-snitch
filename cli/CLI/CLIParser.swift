@@ -16,7 +16,7 @@ enum AppError: Error {
 
 /// Parses command-line arguments into one validated structured request.
 func parseArguments(_ arguments: [String]) throws -> ParsedArguments {
-  var socketPath = defaultSocketPath()
+  var socketPath = defaultWifiSnitchSocketPath()
   var commandArgs: [String] = []
 
   var index = 1

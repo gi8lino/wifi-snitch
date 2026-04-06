@@ -94,7 +94,9 @@ struct StatusRequestHandler {
         return StatusAgentResponse(body: "ERR missing_field")
       }
 
-      guard payload.auth.locationAuthorized || !request.fields.contains(where: requiresLocationAuthorization)
+      guard
+        payload.auth.locationAuthorized
+          || !request.fields.contains(where: requiresLocationAuthorization)
       else {
         return permissionDeniedResponse(permissionState: permissionState)
       }
@@ -136,8 +138,8 @@ struct StatusRequestHandler {
 
   /// Builds debug data from all providers.
   private func debugStatus(payload: StatusPayload) -> [String: String] {
-    var result: [String: String] = [
-      "socket_path": defaultSocketPath(),
+    let result: [String: String] = [
+      "socket_path": defaultWifiSnitchSocketPath(),
       "network_generated_at": payload.network.generatedAt,
       "location_authorized": payload.auth.locationAuthorized ? "true" : "false",
       "location_permission_state": payload.auth.locationPermissionState,

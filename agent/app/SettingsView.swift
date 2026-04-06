@@ -32,7 +32,7 @@ struct SettingsView: View {
       Text("Socket path")
         .font(.headline)
 
-      Text(defaultSocketPath())
+      Text(defaultWifiSnitchSocketPath())
         .font(.footnote)
         .textSelection(.enabled)
     }

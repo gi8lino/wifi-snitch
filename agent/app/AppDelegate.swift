@@ -1,22 +1,27 @@
 import Cocoa
+import EasyBarShared
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-  private let controller = AppController()
+  let logger = ProcessLogger(label: "wifi-snitch")
+  private lazy var controller = AppController(logger: logger)
   private let instanceGuard = SingleInstanceGuard()
 
   /// Starts the agent when the app finishes launching.
   func applicationDidFinishLaunching(_ notification: Notification) {
-    let lockPath = defaultSingleInstanceLockPath()
+    let lockPath = defaultSingleInstanceLockPath(processName: "wifi-snitch")
 
     guard instanceGuard.acquireLock(at: lockPath) else {
-      AgentLogger.warn("wifisnitch already running lock_path=\(lockPath)")
+      logger.warn("wifisnitch already running lock_path=\(lockPath)")
       NSApp.terminate(nil)
       return
     }
 
     NSApp.setActivationPolicy(.accessory)
-    controller.start()
+    guard controller.start() else {
+      NSApp.terminate(nil)
+      return
+    }
   }
 
   /// Stops the agent before the app terminates.

@@ -137,7 +137,7 @@ enum CLI {
       \(formatOption("WIFISNITCH_SOCKET", "Override socket path"))
 
       default socket:
-        \(defaultSocketPath())
+        \(defaultWifiSnitchSocketPath())
       """
 
     fputs(help + "\n", stderr)

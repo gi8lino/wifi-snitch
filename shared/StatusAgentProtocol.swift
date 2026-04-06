@@ -34,41 +34,41 @@ public typealias StatusFieldSpec = NetworkAgentFieldSpec
 public let statusFieldRegistry = networkAgentFieldRegistry
 
 /// Compatibility aliases that preserve existing WiFiSnitch field references.
-public extension NetworkAgentField {
-  static let networkGeneratedAt = Self.generatedAt
-  static let wifiSSID = Self.ssid
-  static let wifiBSSID = Self.bssid
-  static let wifiInterface = Self.interfaceName
-  static let wifiHardwareAddress = Self.hardwareAddress
-  static let wifiPower = Self.power
-  static let wifiServiceActive = Self.serviceActive
-  static let wifiRSSI = Self.rssi
-  static let wifiNoise = Self.noise
-  static let wifiSNR = Self.snr
-  static let wifiLinkQuality = Self.linkQuality
-  static let wifiTxRate = Self.txRate
-  static let wifiChannel = Self.channel
-  static let wifiChannelBand = Self.channelBand
-  static let wifiChannelWidth = Self.channelWidth
-  static let wifiSecurity = Self.security
-  static let wifiPhyMode = Self.phyMode
-  static let wifiInterfaceMode = Self.interfaceMode
-  static let wifiCountryCode = Self.countryCode
-  static let wifiRoaming = Self.roaming
-  static let wifiSSIDChangedAt = Self.ssidChangedAt
-  static let wifiInterfaceChangedAt = Self.interfaceChangedAt
-  static let networkPrimaryInterface = Self.primaryInterface
-  static let networkActiveTunnelInterface = Self.activeTunnelInterface
-  static let networkActiveTunnelInterfaces = Self.activeTunnelInterfaces
-  static let networkPrimaryInterfaceIsTunnel = Self.primaryInterfaceIsTunnel
-  static let networkIPv4Address = Self.ipv4Address
-  static let networkIPv6Address = Self.ipv6Address
-  static let networkDefaultGateway = Self.defaultGateway
-  static let networkDNSServers = Self.dnsServers
-  static let networkInternetReachable = Self.internetReachable
-  static let networkCaptivePortal = Self.captivePortal
-  static let authLocationAuthorized = Self.locationAuthorized
-  static let authLocationPermissionState = Self.locationPermissionState
+extension NetworkAgentField {
+  public static let networkGeneratedAt = Self.generatedAt
+  public static let wifiSSID = Self.ssid
+  public static let wifiBSSID = Self.bssid
+  public static let wifiInterface = Self.interfaceName
+  public static let wifiHardwareAddress = Self.hardwareAddress
+  public static let wifiPower = Self.power
+  public static let wifiServiceActive = Self.serviceActive
+  public static let wifiRSSI = Self.rssi
+  public static let wifiNoise = Self.noise
+  public static let wifiSNR = Self.snr
+  public static let wifiLinkQuality = Self.linkQuality
+  public static let wifiTxRate = Self.txRate
+  public static let wifiChannel = Self.channel
+  public static let wifiChannelBand = Self.channelBand
+  public static let wifiChannelWidth = Self.channelWidth
+  public static let wifiSecurity = Self.security
+  public static let wifiPhyMode = Self.phyMode
+  public static let wifiInterfaceMode = Self.interfaceMode
+  public static let wifiCountryCode = Self.countryCode
+  public static let wifiRoaming = Self.roaming
+  public static let wifiSSIDChangedAt = Self.ssidChangedAt
+  public static let wifiInterfaceChangedAt = Self.interfaceChangedAt
+  public static let networkPrimaryInterface = Self.primaryInterface
+  public static let networkActiveTunnelInterface = Self.activeTunnelInterface
+  public static let networkActiveTunnelInterfaces = Self.activeTunnelInterfaces
+  public static let networkPrimaryInterfaceIsTunnel = Self.primaryInterfaceIsTunnel
+  public static let networkIPv4Address = Self.ipv4Address
+  public static let networkIPv6Address = Self.ipv6Address
+  public static let networkDefaultGateway = Self.defaultGateway
+  public static let networkDNSServers = Self.dnsServers
+  public static let networkInternetReachable = Self.internetReachable
+  public static let networkCaptivePortal = Self.captivePortal
+  public static let authLocationAuthorized = Self.locationAuthorized
+  public static let authLocationPermissionState = Self.locationPermissionState
 }
 
 /// Describes one shared command.

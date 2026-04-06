@@ -121,6 +121,30 @@ When location access is unavailable:
 - `status` still works, but its Wi-Fi section is redacted
 - non-sensitive `network.*` and `auth.*` fields still work
 
+## Environment
+
+WiFiSnitch supports these environment variables:
+
+- `WIFISNITCH_SOCKET`
+  Override the Unix socket path used by the agent and CLI.
+
+- `WIFISNITCH_LOCK_DIR`
+  Override the directory used for the single-instance lock file.
+
+Defaults:
+
+```text
+socket: /tmp/wifisnitch/wifisnitch.sock
+lock dir: /tmp/wifisnitch
+```
+
+Examples:
+
+```bash
+WIFISNITCH_SOCKET=/path/to/wifisnitch.sock wifisnitch ping
+WIFISNITCH_LOCK_DIR=/tmp/custom-wifisnitch open /Applications/WiFiSnitch.app
+```
+
 ## Usage
 
 Show help:
@@ -147,10 +171,10 @@ wifisnitch ping
 wifisnitch version
 ```
 
-The socket path is:
+The default socket path is:
 
 ```text
-~/Library/Caches/wifisnitch/wifisnitch.sock
+/tmp/wifisnitch/wifisnitch.sock
 ```
 
 You can override it with:

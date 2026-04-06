@@ -1,5 +1,6 @@
 import Cocoa
 import EasyBarShared
+import WiFiSnitchShared
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -9,7 +10,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   /// Starts the agent when the app finishes launching.
   func applicationDidFinishLaunching(_ notification: Notification) {
-    let lockPath = defaultSingleInstanceLockPath(processName: "wifi-snitch")
+    let lockPath = defaultWifiSnitchLockPath()
+    logger.info("wifisnitch startup lock_path=\(lockPath)")
 
     guard instanceGuard.acquireLock(at: lockPath) else {
       logger.warn("wifisnitch already running lock_path=\(lockPath)")

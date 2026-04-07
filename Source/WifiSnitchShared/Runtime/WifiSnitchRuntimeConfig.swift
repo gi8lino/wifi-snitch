@@ -11,7 +11,7 @@ public struct WiFiSnitchRuntimeConfig {
   public let lockDirectory: String
   public let socketPath: String
   public let refreshIntervalSeconds: TimeInterval
-  public let allowUnauthorizedNonSensitiveFields: Bool
+  public let allowUnauthorizedFieldsWithoutLocation: Bool
 
   public static let current = load()
 
@@ -54,9 +54,9 @@ public struct WiFiSnitchRuntimeConfig {
       ?? agentTable?["refresh_interval_seconds"]?.double
       ?? 60
 
-    let allowUnauthorizedNonSensitiveFields =
-      boolEnvironmentValue(named: "WIFISNITCH_ALLOW_UNAUTHORIZED_NON_SENSITIVE_FIELDS")
-      ?? agentTable?["allow_unauthorized_non_sensitive_fields"]?.bool
+    let allowUnauthorizedFieldsWithoutLocation =
+      boolEnvironmentValue(named: "WIFISNITCH_ALLOW_UNAUTHORIZED_FIELDS_WITHOUT_LOCATION")
+      ?? agentTable?["allow_unauthorized_fields_without_location"]?.bool
       ?? false
 
     return WiFiSnitchRuntimeConfig(
@@ -67,7 +67,7 @@ public struct WiFiSnitchRuntimeConfig {
       lockDirectory: lockDirectory,
       socketPath: socketPath,
       refreshIntervalSeconds: refreshIntervalSeconds,
-      allowUnauthorizedNonSensitiveFields: allowUnauthorizedNonSensitiveFields
+      allowUnauthorizedFieldsWithoutLocation: allowUnauthorizedFieldsWithoutLocation
     )
   }
 }

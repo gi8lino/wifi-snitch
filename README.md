@@ -2,11 +2,9 @@
 
 WiFiSnitch is a small macOS helper app that exposes Wi-Fi and network status over a local Unix socket.
 
-It ships with a small CLI client, `wifisnitch`, so the data can be queried easily from shell scripts, status bars like Easybar, SketchyBar, and other local automation.
+It ships with a small CLI client, `wifisnitch`, so the data can be queried easily from shell scripts, status bars like EasyBar, SketchyBar, and other local automation.
 
 It exists because recent macOS versions often hide the current SSID and related Wi-Fi details from normal shell scripts. WiFiSnitch runs in the user session, requests the required location permission, and makes the result available to local tools in a simple, script-friendly way.
-
-Internally, WiFiSnitch is intentionally thin. It starts EasyBar’s network-agent core on a WiFiSnitch-specific socket and exposes that agent through the bundled `wifisnitch` CLI.
 
 ## Scope
 
@@ -114,29 +112,77 @@ When location access is unavailable:
 
 - `wifi.*` fields are unavailable
 - `network.*` and `auth.*` fields still work
-- `fetch` returns only the fields the network agent can currently provide
+- `fetch` returns only the fields the agent can currently provide
 - if the agent rejects a fetch request, the CLI prints the returned error message
 
-## Environment
+## Configuration
+
+WiFiSnitch uses its own runtime configuration and its own environment variables.
+
+It does not need EasyBar’s `config.toml`, and it does not require `EASYBAR_*` environment variables.
+
+### Environment variables
 
 WiFiSnitch supports these environment variables:
 
 - `WIFISNITCH_SOCKET`
   Override the Unix socket path used by the WiFiSnitch agent and CLI.
 
-The bundled agent also sets EasyBar’s network-agent socket override internally so the EasyBar network core listens on the WiFiSnitch socket path.
+- `WIFISNITCH_CONFIG_PATH`
+  Override the path to the WiFiSnitch config file.
 
-Default:
+- `WIFISNITCH_LOCK_DIR`
+  Override the directory used for the single-instance lock file.
+
+- `WIFISNITCH_LOGGING_ENABLED`
+  Enable or disable file logging.
+
+- `WIFISNITCH_DEBUG`
+  Enable debug logging.
+
+- `WIFISNITCH_LOG_DIR`
+  Override the directory used for WiFiSnitch log files.
+
+- `WIFISNITCH_REFRESH_INTERVAL_SECONDS`
+  Override the periodic refresh interval used by the agent.
+
+- `WIFISNITCH_ALLOW_UNAUTHORIZED_NON_SENSITIVE_FIELDS`
+  Allow non-sensitive `network.*` and `auth.*` fields to be returned even when Wi-Fi access is not authorized.
+
+### Defaults
 
 ```text
+config: ~/.config/wifisnitch/config.toml
 socket: /tmp/wifi-snitch/wifi-snitch.sock
+lock dir: /tmp/wifi-snitch
+log dir: ~/.local/state/wifisnitch
+refresh interval: 60
+allow unauthorized non-sensitive fields: false
 ```
 
-Examples:
+### Example config
+
+```toml
+[logging]
+enabled = false
+debug = false
+directory = "~/.local/state/wifisnitch"
+
+[agent]
+socket_path = "/tmp/wifi-snitch/wifi-snitch.sock"
+refresh_interval_seconds = 60
+allow_unauthorized_non_sensitive_fields = false
+
+[app]
+lock_dir = "/tmp/wifi-snitch"
+```
+
+### Examples
 
 ```bash
 WIFISNITCH_SOCKET=/path/to/wifi-snitch.sock wifisnitch ping
-WIFISNITCH_SOCKET=/tmp/test.sock open /Applications/WiFiSnitch.app
+WIFISNITCH_CONFIG_PATH=~/.config/wifisnitch/config.toml wifisnitch version
+WIFISNITCH_DEBUG=1 open /Applications/WiFiSnitch.app
 ```
 
 ## Usage
@@ -289,7 +335,7 @@ Notes:
 - `network.active_tunnel_interfaces` contains all currently visible tunnel-like interfaces.
 - `network.internet_reachable` is a cheap reachability hint, not an active probe.
 - `network.captive_portal` is a cheap heuristic, not a captive portal login check.
-- `version` returns a structured version payload from the underlying network agent.
+- `version` returns a structured version payload from the agent.
 - `fields` lists the field names supported by `fetch`.
 - `formats` lists the supported CLI output formats.
 
@@ -323,7 +369,9 @@ If `ping` fails, the agent is probably not running, was blocked by macOS, or nev
 
 ### Logs
 
-WiFiSnitch logs useful startup and permission information. If you enabled file logging, inspect the configured log directory.
+WiFiSnitch logs useful startup and permission information.
+
+If file logging is enabled, inspect the configured WiFiSnitch log directory.
 
 If you installed with Homebrew services, also inspect service logs:
 
@@ -412,7 +460,7 @@ wifisnitch fetch auth.location_permission_state --format=text
 Expected behavior:
 
 - `wifi.*` fields depend on location access
-- `network.*` and `auth.*` fields still work
+- `network.*` and `auth.*` fields still work when configured to allow them without Wi-Fi authorization
 
 If you changed permission settings, restart WiFiSnitch:
 
@@ -424,7 +472,7 @@ brew services restart wifisnitch
 
 This usually means one of these:
 
-- different environment
+- different WiFiSnitch environment variables
 - duplicate instances
 - stale permission state in an older process
 - quarantine or launch blocking in one path but not the other
@@ -534,7 +582,7 @@ Run the packaged app:
 open dist/WiFiSnitch.app
 ```
 
-Or:
+Or run the local development flow:
 
 ```bash
 make run

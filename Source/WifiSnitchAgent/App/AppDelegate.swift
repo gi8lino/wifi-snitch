@@ -12,8 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   /// Starts the network agent after launch.
   func applicationDidFinishLaunching(_ notification: Notification) {
-    let runtimeConfig = SharedRuntimeConfig.current
-    let socketPath = resolvedWifiSnitchSocketPath()
+    let runtimeConfig = WiFiSnitchRuntimeConfig.current
 
     logger.configureRuntimeLogging(
       debugEnabled: runtimeConfig.loggingDebugEnabled,
@@ -40,10 +39,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       componentName: "wifi-snitch",
       appVersion: WiFiSnitchShared.BuildInfo.appVersion,
       configPath: runtimeConfig.configPath,
-      socketPath: socketPath,
-      refreshIntervalSeconds: runtimeConfig.networkAgentRefreshIntervalSeconds,
-      allowUnauthorizedNonSensitiveFields: runtimeConfig
-        .networkAgentAllowUnauthorizedNonSensitiveFields
+      socketPath: runtimeConfig.socketPath,
+      refreshIntervalSeconds: runtimeConfig.refreshIntervalSeconds,
+      allowUnauthorizedNonSensitiveFields: runtimeConfig.allowUnauthorizedNonSensitiveFields
     )
 
     controller = NetworkAgentController(config: controllerConfig, logger: logger)

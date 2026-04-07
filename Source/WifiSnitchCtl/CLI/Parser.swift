@@ -27,7 +27,7 @@ enum AppError: Error {
 
 /// Parses command-line arguments into one validated operation.
 func parseArguments(_ arguments: [String]) throws -> ParsedArguments {
-  var socketPath = resolvedWifiSnitchSocketPath()
+  var socketPath = WiFiSnitchRuntimeConfig.current.socketPath
   var commandArgs: [String] = []
 
   var index = 1

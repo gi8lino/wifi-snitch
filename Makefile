@@ -1,3 +1,5 @@
+# swift-tools-version helper makefile for WiFiSnitch packaging and local development.
+
 APP_NAME := WiFiSnitch
 APP_EXEC := WiFiSnitch
 AGENT_PRODUCT := WiFiSnitch
@@ -20,7 +22,7 @@ PACKAGE_NAME := $(APP_NAME)-$(VERSION).zip
 PACKAGE_ZIP := $(DIST_DIR)/$(PACKAGE_NAME)
 PACKAGE_STAGE := $(DIST_DIR)/package
 
-BUILD_INFO := shared/BuildInfo.swift
+BUILD_INFO := Source/WifiSnitchShared/BuildInfo.swift
 
 BUNDLE_ID ?= io.github.gi8lino.wifisnitch
 VERSION ?= dev
@@ -49,7 +51,7 @@ endif
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all prepare-version build bundle package release agent cli clean clean-dist run dev stop icons \
+.PHONY: help all prepare-version build bundle package release agent cli fmt clean clean-dist run dev stop icons \
         build-agent build-cli verify stamp-plist sign \
         print-arch print-version print-latest-tag print-package-sha256 \
         tag-patch tag-minor tag-major push-tags
@@ -61,7 +63,7 @@ help: ## Display this help.
 
 all: build ## Build the default artifacts.
 
-prepare-version: ## Update shared/BuildInfo.swift with the selected VERSION.
+prepare-version: ## Update Source/WifiSnitchShared/BuildInfo.swift with the selected VERSION.
 	@mkdir -p "$(dir $(BUILD_INFO))"
 	@python3 -c 'from pathlib import Path; import re; path = Path("$(BUILD_INFO)"); text = path.read_text(); \
 updated = re.sub(r"public static let appVersion = \".*?\"", "public static let appVersion = \"$(VERSION)\"", text, count=1); \
@@ -159,6 +161,7 @@ stamp-plist: ## Internal target: stamp version and bundle ID into Info.plist.
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleVersion $(VERSION)' "$(PLIST)"
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleExecutable $(APP_EXEC)' "$(PLIST)"
 	@/usr/libexec/PlistBuddy -c 'Set :CFBundleName $(APP_NAME)' "$(PLIST)" >/dev/null 2>&1 || true
+	@/usr/libexec/PlistBuddy -c 'Set :CFBundleDisplayName $(APP_NAME)' "$(PLIST)" >/dev/null 2>&1 || true
 	@/usr/libexec/PlistBuddy -c 'Add :CFBundleIconFile string $(APP_ICON_FILE)' "$(PLIST)" >/dev/null 2>&1 || \
 		/usr/libexec/PlistBuddy -c 'Set :CFBundleIconFile $(APP_ICON_FILE)' "$(PLIST)"
 
@@ -169,20 +172,29 @@ verify: ## Show the built binary architectures and packaged artifacts.
 	@echo "Built $(ARCH) artifacts:"
 	@file "$(APP_BIN)"
 	@file "$(CLI_BIN)"
+	@test -f "$(PLIST)"
+	@echo "Info.plist:"
+	@plutil -p "$(PLIST)"
 	@echo "Packaged app root:"
 	@ls -1 "$(APP_BUNDLE)"
 	@echo "Packaged Contents:"
 	@ls -1 "$(APP_CONTENTS)"
+	@echo "Packaged Resources:"
+	@ls -1 "$(APP_RESOURCES)" 2>/dev/null || true
 
-run: bundle ## Build and open the app bundle.
-	@open "$(APP_BUNDLE)"
+run: bundle ## Build, stop old instances, and run WiFiSnitch in foreground.
+	@$(MAKE) --no-print-directory stop
+	@WIFISNITCH_SOCKET=/tmp/wifi-snitch/wifi-snitch.sock "$(APP_BIN)"
 
 dev: prepare-version ## Fast debug run without bundling.
+	@$(MAKE) --no-print-directory stop
 	@$(SWIFT_BUILD_DEBUG) --product $(AGENT_PRODUCT)
-	@swift run -c debug $(AGENT_PRODUCT)
+	@WIFISNITCH_SOCKET=/tmp/wifi-snitch/wifi-snitch.sock swift run -c debug $(AGENT_PRODUCT)
 
 stop: ## Stop Homebrew and local WiFiSnitch app instances.
-	@brew services stop wifisnitch >/dev/null 2>&1 || true
+	@if command -v brew >/dev/null 2>&1; then \
+		brew services stop wifisnitch >/dev/null 2>&1 || true; \
+	fi
 	@pkill -x "$(APP_EXEC)" >/dev/null 2>&1 || true
 	@pkill -f "$(abspath $(APP_BIN))" >/dev/null 2>&1 || true
 
@@ -196,7 +208,6 @@ clean: ## Remove dist/, .build, and reset BuildInfo.swift to its placeholder ver
 	@python3 -c 'from pathlib import Path; import re; path = Path("$(BUILD_INFO)"); text = path.read_text(); \
 updated = re.sub(r"public static let appVersion = \".*?\"", "public static let appVersion = \"dev\"", text, count=1); \
 path.write_text(updated)'
-
 
 ##@ Info
 

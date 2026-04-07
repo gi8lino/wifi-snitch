@@ -6,6 +6,8 @@ It ships with a small CLI client, `wifisnitch`, so the data can be queried easil
 
 It exists because recent macOS versions often hide the current SSID and related Wi-Fi details from normal shell scripts. WiFiSnitch runs in the user session, requests the required location permission, and makes the result available to local tools in a simple, script-friendly way.
 
+Internally, WiFiSnitch is intentionally thin. It starts EasyBar’s network-agent core on a WiFiSnitch-specific socket and exposes that agent through the bundled `wifisnitch` CLI.
+
 ## Scope
 
 WiFiSnitch is intentionally narrow:
@@ -94,12 +96,6 @@ If the permission prompt does not appear or you want to reset it:
 
 ```bash
 tccutil reset Location io.github.gi8lino.wifisnitch
-open /Applications/WiFiSnitch.app
-```
-
-If installed with Homebrew, open the app bundle directly if needed:
-
-```bash
 open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
 ```
 
@@ -110,39 +106,37 @@ Then allow location access in:
 You can verify the current state with:
 
 ```bash
-wifisnitch field auth.location_authorized --format=text
-wifisnitch field auth.location_permission_state --format=text
+wifisnitch fetch auth.location_authorized --format=text
+wifisnitch fetch auth.location_permission_state --format=text
 ```
 
 When location access is unavailable:
 
-- Wi-Fi-specific commands like `ssid`, `wifi`, and `signal` return `ERR permission_denied:<state>`
-- `field ...` returns the same error if any requested field starts with `wifi.`
-- `status` still works, but its Wi-Fi section is redacted
-- non-sensitive `network.*` and `auth.*` fields still work
+- `wifi.*` fields are unavailable
+- `network.*` and `auth.*` fields still work
+- `fetch` returns only the fields the network agent can currently provide
+- if the agent rejects a fetch request, the CLI prints the returned error message
 
 ## Environment
 
 WiFiSnitch supports these environment variables:
 
 - `WIFISNITCH_SOCKET`
-  Override the Unix socket path used by the agent and CLI.
+  Override the Unix socket path used by the WiFiSnitch agent and CLI.
 
-- `WIFISNITCH_LOCK_DIR`
-  Override the directory used for the single-instance lock file.
+The bundled agent also sets EasyBar’s network-agent socket override internally so the EasyBar network core listens on the WiFiSnitch socket path.
 
-Defaults:
+Default:
 
 ```text
-socket: /tmp/wifisnitch/wifisnitch.sock
-lock dir: /tmp/wifisnitch
+socket: /tmp/wifi-snitch/wifi-snitch.sock
 ```
 
 Examples:
 
 ```bash
-WIFISNITCH_SOCKET=/path/to/wifisnitch.sock wifisnitch ping
-WIFISNITCH_LOCK_DIR=/tmp/custom-wifisnitch open /Applications/WiFiSnitch.app
+WIFISNITCH_SOCKET=/path/to/wifi-snitch.sock wifisnitch ping
+WIFISNITCH_SOCKET=/tmp/test.sock open /Applications/WiFiSnitch.app
 ```
 
 ## Usage
@@ -156,25 +150,22 @@ wifisnitch --help
 Common examples:
 
 ```bash
-wifisnitch
-wifisnitch ssid
-wifisnitch status --format=lines
-wifisnitch wifi
-wifisnitch network
-wifisnitch debug
-wifisnitch field wifi.ssid --format=text
-wifisnitch field wifi.ssid,wifi.bssid,wifi.channel --format=lines
-wifisnitch field wifi.hardware_address,wifi.interface_mode --format=lines
-wifisnitch field network.primary_interface,network.active_tunnel_interface --format=lines
-wifisnitch field network.primary_interface_is_tunnel --format=text
 wifisnitch ping
 wifisnitch version
+wifisnitch fields
+wifisnitch formats
+wifisnitch fetch wifi.ssid --format=text
+wifisnitch fetch wifi.ssid,wifi.bssid,wifi.channel --format=lines
+wifisnitch fetch wifi.hardware_address,wifi.interface_mode --format=lines
+wifisnitch fetch network.primary_interface,network.active_tunnel_interface --format=lines
+wifisnitch fetch network.primary_interface_is_tunnel --format=text
+wifisnitch fetch auth.location_authorized,auth.location_permission_state --format=lines
 ```
 
 The default socket path is:
 
 ```text
-/tmp/wifisnitch/wifisnitch.sock
+/tmp/wifi-snitch/wifi-snitch.sock
 ```
 
 You can override it with:
@@ -191,19 +182,12 @@ Built-in commands:
 - `version`
 - `fields`
 - `formats`
-- `ssid`
-- `status`
-- `wifi`
-- `network`
-- `auth`
-- `signal`
-- `debug`
-- `field`
+- `fetch`
 
 Field queries use:
 
-- `field <field>`
-- `field <field1>,<field2>,...`
+- `fetch <field>`
+- `fetch <field1>,<field2>,...`
 
 Formats:
 
@@ -250,9 +234,7 @@ Available fields:
 
 ## Output shape
 
-`status` returns the full default payload as JSON.
-
-`field ... --format=json` returns typed JSON values, not stringified ones.
+`fetch ... --format=json` returns typed JSON values, not stringified ones.
 
 Examples:
 
@@ -264,45 +246,40 @@ Example:
 
 ```json
 {
-  "auth": {
-    "location_authorized": true,
-    "location_permission_state": "authorized_when_in_use"
-  },
-  "network": {
-    "active_tunnel_interface": null,
-    "active_tunnel_interfaces": [],
-    "captive_portal": false,
-    "default_gateway": "192.168.1.1",
-    "dns_servers": ["1.1.1.1", "9.9.9.9"],
-    "internet_reachable": true,
-    "ipv4_address": "192.168.1.42",
-    "ipv6_address": "fe80::1234",
-    "primary_interface": "en0",
-    "primary_interface_is_tunnel": false
-  },
-  "wifi": {
-    "bssid": "aa:bb:cc:dd:ee:ff",
-    "channel": 44,
-    "channel_band": "5ghz",
-    "channel_width": "80mhz",
-    "country_code": "CH",
-    "hardware_address": "11:22:33:44:55:66",
-    "interface": "en0",
-    "interface_changed_at": "2026-03-17T12:34:56Z",
-    "interface_mode": "station",
-    "link_quality": 68,
-    "noise": -90,
-    "phy_mode": "802.11ax",
-    "power": true,
-    "roaming": false,
-    "rssi": -63,
-    "security": "wpa3_personal",
-    "service_active": true,
-    "snr": 27,
-    "ssid": "ExampleWiFi",
-    "ssid_changed_at": "2026-03-17T12:30:00Z",
-    "tx_rate": 780
-  }
+  "auth.location_authorized": true,
+  "auth.location_permission_state": "authorized_when_in_use",
+  "network.active_tunnel_interface": null,
+  "network.active_tunnel_interfaces": [],
+  "network.captive_portal": false,
+  "network.default_gateway": "192.168.1.1",
+  "network.dns_servers": ["1.1.1.1", "9.9.9.9"],
+  "network.generated_at": "2026-03-17T12:34:56Z",
+  "network.internet_reachable": true,
+  "network.ipv4_address": "192.168.1.42",
+  "network.ipv6_address": "fe80::1234",
+  "network.primary_interface": "en0",
+  "network.primary_interface_is_tunnel": false,
+  "wifi.bssid": "aa:bb:cc:dd:ee:ff",
+  "wifi.channel": 44,
+  "wifi.channel_band": "5ghz",
+  "wifi.channel_width": "80mhz",
+  "wifi.country_code": "CH",
+  "wifi.hardware_address": "11:22:33:44:55:66",
+  "wifi.interface": "en0",
+  "wifi.interface_changed_at": "2026-03-17T12:34:56Z",
+  "wifi.interface_mode": "station",
+  "wifi.link_quality": 68,
+  "wifi.noise": -90,
+  "wifi.phy_mode": "802.11ax",
+  "wifi.power": true,
+  "wifi.roaming": false,
+  "wifi.rssi": -63,
+  "wifi.security": "wpa3_personal",
+  "wifi.service_active": true,
+  "wifi.snr": 27,
+  "wifi.ssid": "ExampleWiFi",
+  "wifi.ssid_changed_at": "2026-03-17T12:30:00Z",
+  "wifi.tx_rate": 780
 }
 ```
 
@@ -312,8 +289,9 @@ Notes:
 - `network.active_tunnel_interfaces` contains all currently visible tunnel-like interfaces.
 - `network.internet_reachable` is a cheap reachability hint, not an active probe.
 - `network.captive_portal` is a cheap heuristic, not a captive portal login check.
-- `ssid` returns `OK <ssid>` or `EMPTY`.
-- `debug` returns extra internal state useful for troubleshooting.
+- `version` returns a structured version payload from the underlying network agent.
+- `fields` lists the field names supported by `fetch`.
+- `formats` lists the supported CLI output formats.
 
 ## Troubleshooting
 
@@ -333,8 +311,6 @@ Check running processes:
 pgrep -fl WiFiSnitch
 pgrep -fl wifisnitch
 ```
-
-You should not have multiple app instances fighting over the same socket or permission flow.
 
 Check the CLI against the local agent:
 
@@ -361,7 +337,7 @@ If your machine writes Homebrew logs elsewhere, use `brew services info wifisnit
 
 #### WiFiSnitch is already running
 
-WiFiSnitch now uses a single-instance guard. If another instance already holds the startup lock, the second one exits and logs a warning.
+WiFiSnitch uses a single-instance guard. If another instance already holds the startup lock, the second one exits and logs a warning.
 
 Detect duplicates with:
 
@@ -409,8 +385,8 @@ brew services restart wifisnitch
 Check the permission state directly:
 
 ```bash
-wifisnitch field auth.location_authorized --format=text
-wifisnitch field auth.location_permission_state --format=text
+wifisnitch fetch auth.location_authorized --format=text
+wifisnitch fetch auth.location_permission_state --format=text
 ```
 
 If the state is not what you expect, reset the permission and relaunch:
@@ -422,24 +398,21 @@ open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
 
 Then allow location access in System Settings and retry your field queries.
 
-#### Wi-Fi-specific commands return `permission_denied`
+#### Wi-Fi-specific fetches fail
 
 That usually means Location Services access is denied, restricted, or not yet granted.
 
 Useful checks:
 
 ```bash
-wifisnitch ssid
-wifisnitch wifi
-wifisnitch field wifi.ssid --format=text
-wifisnitch field auth.location_permission_state --format=text
+wifisnitch fetch wifi.ssid --format=text
+wifisnitch fetch auth.location_permission_state --format=text
 ```
 
 Expected behavior:
 
-- `wifi.*` fields are blocked without permission
+- `wifi.*` fields depend on location access
 - `network.*` and `auth.*` fields still work
-- `status` still works but redacts Wi-Fi data
 
 If you changed permission settings, restart WiFiSnitch:
 
@@ -501,12 +474,12 @@ If permission still looks wrong after that, also reset Location Services permiss
 Show the current Wi-Fi name:
 
 ```lua
-local handle = io.popen("wifisnitch field wifi.ssid --format=text")
+local handle = io.popen("wifisnitch fetch wifi.ssid --format=text")
 local output = handle and handle:read("*a") or ""
 if handle then handle:close() end
 
 local ssid = output:gsub("^%s+", ""):gsub("%s+$", "")
-if ssid == "" or ssid == "EMPTY" then
+if ssid == "" then
   ssid = "WiFi"
 end
 
@@ -517,7 +490,7 @@ Read Wi-Fi plus tunnel info:
 
 ```lua
 local handle = io.popen(
-  "wifisnitch field wifi.ssid,network.active_tunnel_interface,network.primary_interface_is_tunnel --format=lines"
+  "wifisnitch fetch wifi.ssid,network.active_tunnel_interface,network.primary_interface_is_tunnel --format=lines"
 )
 local output = handle and handle:read("*a") or ""
 if handle then handle:close() end

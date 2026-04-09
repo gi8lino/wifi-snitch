@@ -11,13 +11,16 @@ let package = Package(
     .executable(name: "wifisnitch", targets: ["WiFiSnitch"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/gi8lino/easybar.git", exact: "0.0.110")
+    .package(
+      url: "https://github.com/gi8lino/easybar.git", exact: "0.0.111"),
+    .package(url: "https://github.com/LebJe/TOMLKit", from: "0.6.0"),
   ],
   targets: [
     .target(
       name: "WiFiSnitchShared",
       dependencies: [
-        .product(name: "EasyBarShared", package: "easybar")
+        .product(name: "EasyBarShared", package: "easybar"),
+        .product(name: "TOMLKit", package: "TOMLKit"),
       ],
       path: "Source/WifiSnitchShared"
     ),

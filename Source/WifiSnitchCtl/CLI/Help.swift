@@ -258,7 +258,7 @@ enum CLI {
       \(appOptions.map { formatOption(optionText(for: $0), $0.description) }.joined(separator: "\n"))
 
       environment:
-      \(formatOption("WIFISNITCH_SOCKET", "Override WiFiSnitch socket path"))
+      \(formatOption(WifiSnitchEnvironmentKeys.socketPath, "Override WiFiSnitch socket path"))
 
       default socket:
         \(resolvedWifiSnitchSocketPath())

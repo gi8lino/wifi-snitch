@@ -3,7 +3,7 @@ import Foundation
 
 /// Returns the resolved WiFiSnitch config path.
 public func resolvedWifiSnitchConfigPath() -> String {
-  expandedEnvironmentPath(named: "WIFISNITCH_CONFIG_PATH")
+  expandedEnvironmentPath(named: WifiSnitchEnvironmentKeys.configPath)
     ?? defaultWifiSnitchConfigPath()
 }
 
@@ -16,7 +16,7 @@ public func defaultWifiSnitchConfigPath() -> String {
 
 /// Returns the resolved socket path used by WiFiSnitch.
 public func resolvedWifiSnitchSocketPath() -> String {
-  expandedEnvironmentPath(named: "WIFISNITCH_SOCKET")
+  expandedEnvironmentPath(named: WifiSnitchEnvironmentKeys.socketPath)
     ?? defaultWifiSnitchSocketPath()
 }
 

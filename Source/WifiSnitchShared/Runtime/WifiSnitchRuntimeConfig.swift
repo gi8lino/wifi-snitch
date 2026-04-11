@@ -25,37 +25,37 @@ public struct WiFiSnitchRuntimeConfig {
     let appTable = toml["app"]?.table
 
     let loggingEnabled =
-      boolEnvironmentValue(named: "WIFISNITCH_LOGGING_ENABLED")
+      boolEnvironmentValue(named: WifiSnitchEnvironmentKeys.loggingEnabled)
       ?? loggingTable?["enabled"]?.bool
       ?? false
 
     let loggingDebugEnabled =
-      boolEnvironmentValue(named: "WIFISNITCH_DEBUG")
+      boolEnvironmentValue(named: WifiSnitchEnvironmentKeys.loggingDebugEnabled)
       ?? loggingTable?["debug"]?.bool
       ?? false
 
     let loggingDirectory =
-      expandedEnvironmentPath(named: "WIFISNITCH_LOG_DIR")
+      expandedEnvironmentPath(named: WifiSnitchEnvironmentKeys.loggingDirectory)
       ?? expandedPath(loggingTable?["directory"]?.string)
       ?? defaultWifiSnitchLoggingDirectory()
 
     let lockDirectory =
-      expandedEnvironmentPath(named: "WIFISNITCH_LOCK_DIR")
+      expandedEnvironmentPath(named: WifiSnitchEnvironmentKeys.lockDirectory)
       ?? expandedPath(appTable?["lock_dir"]?.string)
       ?? defaultWifiSnitchLockDirectory()
 
     let socketPath =
-      expandedEnvironmentPath(named: "WIFISNITCH_SOCKET")
+      expandedEnvironmentPath(named: WifiSnitchEnvironmentKeys.socketPath)
       ?? expandedPath(agentTable?["socket_path"]?.string)
       ?? defaultWifiSnitchSocketPath()
 
     let refreshIntervalSeconds =
-      timeIntervalEnvironmentValue(named: "WIFISNITCH_REFRESH_INTERVAL_SECONDS")
+      timeIntervalEnvironmentValue(named: WifiSnitchEnvironmentKeys.refreshIntervalSeconds)
       ?? agentTable?["refresh_interval_seconds"]?.double
       ?? 60
 
     let allowUnauthorizedFieldsWithoutLocation =
-      boolEnvironmentValue(named: "WIFISNITCH_ALLOW_UNAUTHORIZED_FIELDS_WITHOUT_LOCATION")
+      boolEnvironmentValue(named: WifiSnitchEnvironmentKeys.allowUnauthorizedFieldsWithoutLocation)
       ?? agentTable?["allow_unauthorized_fields_without_location"]?.bool
       ?? false
 

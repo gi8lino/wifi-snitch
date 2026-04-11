@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NetworkAuthorizationPr
     let runtimeConfig = WiFiSnitchRuntimeConfig.current
 
     logger.configureRuntimeLogging(
-      debugEnabled: runtimeConfig.loggingDebugEnabled,
+      minimumLevel: runtimeConfig.loggingDebugEnabled ? .debug : .info,
       fileLoggingEnabled: runtimeConfig.loggingEnabled,
       fileLoggingPath: URL(fileURLWithPath: runtimeConfig.loggingDirectory)
         .appendingPathComponent("wifi-snitch.out")

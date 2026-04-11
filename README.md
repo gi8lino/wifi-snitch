@@ -2,63 +2,24 @@
 
 WiFiSnitch is a small macOS helper app that exposes Wi-Fi and network status over a local Unix socket.
 
-It ships with a small CLI client, `wifisnitch`, so the data can be queried easily from shell scripts, status bars like EasyBar, SketchyBar, and other local automation.
+It ships with a CLI client, `wifisnitch`, so shell scripts, status bars, and local automation can query the current network state without talking to private macOS APIs directly.
 
-It exists because recent macOS versions often hide the current SSID and related Wi-Fi details from normal shell scripts. WiFiSnitch runs in the user session, requests the required location permission, and makes the result available to local tools in a simple, script-friendly way.
-
-## Scope
-
-WiFiSnitch is intentionally narrow:
-
-- Wi-Fi data that is awkward to access from shell scripts on modern macOS
-- network and tunnel status that is useful in bars, scripts, and local automation
-- a tiny local socket protocol
-- a small CLI client for querying the socket
-- a Homebrew-friendly app and service workflow
-
-## Features
-
-- current SSID and BSSID
-- interface name and hardware address
-- power and service state
-- RSSI, noise, SNR, and derived link quality
-- transmit rate, channel, band, and channel width
-- security mode, PHY mode, interface mode, and country code
-- roaming detection and simple change timestamps
-- primary interface and tunnel detection
-- active tunnel interface list
-- IPv4, IPv6, default gateway, and DNS servers
-- internet reachability and captive portal hints
-- location authorization state
-- snapshot generation timestamp
-- startup logging and duplicate-instance protection
+Wi-Fi-specific fields require Location Services permission. Network and authorization fields remain available without Wi-Fi permission unless you explicitly lock them down.
 
 ## Install
 
-WiFiSnitch is distributed through Homebrew in the `gi8lino/tap` tap.
-
-Add the tap:
+Install from Homebrew:
 
 ```bash
 brew tap gi8lino/tap
-```
-
-Install WiFiSnitch:
-
-```bash
 brew install gi8lino/tap/wifisnitch
+brew services start wifisnitch
 ```
 
 This installs:
 
-- `WiFiSnitch.app` inside the Homebrew Cellar
-- `wifisnitch` for CLI access to the local socket API
-
-Start it as a user service:
-
-```bash
-brew services start wifisnitch
-```
+- `WiFiSnitch.app`
+- `wifisnitch`
 
 Useful service commands:
 
@@ -67,16 +28,7 @@ brew services stop wifisnitch
 brew services restart wifisnitch
 ```
 
-> [!NOTE]
-> By using WiFiSnitch, you acknowledge that it is not notarized.
->
-> Notarization is one of Apple's distribution checks. In practice, it means sending binaries to Apple and dealing with their packaging and approval flow.
->
-> I do not mind the general idea of signing or notarization. I specifically do not want to spend time dealing with Apple's developer account, notarization pipeline, and release bureaucracy for this project.
->
-> The Homebrew install is meant to work out of the box in the common case. If macOS still blocks WiFiSnitch or the CLI with a Gatekeeper or malware verification warning on your machine, remove the quarantine attribute and start it again.
-
-If macOS blocks the app or CLI with a Gatekeeper or malware verification warning, remove quarantine and start it again:
+If macOS blocks the app or CLI with a quarantine warning:
 
 ```bash
 xattr -dr com.apple.quarantine "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
@@ -86,11 +38,9 @@ brew services start wifisnitch
 
 ## Permissions
 
-WiFiSnitch needs location permission to read the current Wi-Fi network name and related Wi-Fi details.
+On first launch, macOS should ask for location access. WiFiSnitch needs that permission to read SSID, BSSID, RSSI, channel, and related Wi-Fi details.
 
-On first launch, macOS should prompt for permission.
-
-If the permission prompt does not appear or you want to reset it:
+To reset permission and trigger the prompt again:
 
 ```bash
 tccutil reset Location io.github.gi8lino.wifisnitch
@@ -101,66 +51,53 @@ Then allow location access in:
 
 **System Settings → Privacy & Security → Location Services**
 
-You can verify the current state with:
+Check the current state with:
 
 ```bash
 wifisnitch fetch auth.location_authorized --format=text
 wifisnitch fetch auth.location_permission_state --format=text
 ```
 
-When location access is unavailable:
+Without location access:
 
 - `wifi.*` fields are unavailable
 - `network.*` and `auth.*` fields still work
 - `fetch` returns only the fields the agent can currently provide
-- if the agent rejects a fetch request, the CLI prints the returned error message
 
 ## Configuration
 
-WiFiSnitch uses its own runtime configuration and its own environment variables.
-
-It does not need EasyBar’s `config.toml`, and it does not require `EASYBAR_*` environment variables.
-
-### Environment variables
-
-WiFiSnitch supports these environment variables:
-
-- `WIFISNITCH_SOCKET`
-  Override the Unix socket path used by the WiFiSnitch agent and CLI.
-
-- `WIFISNITCH_CONFIG_PATH`
-  Override the path to the WiFiSnitch config file.
-
-- `WIFISNITCH_LOCK_DIR`
-  Override the directory used for the single-instance lock file.
-
-- `WIFISNITCH_LOGGING_ENABLED`
-  Enable or disable file logging.
-
-- `WIFISNITCH_DEBUG`
-  Enable debug logging.
-
-- `WIFISNITCH_LOG_DIR`
-  Override the directory used for WiFiSnitch log files.
-
-- `WIFISNITCH_REFRESH_INTERVAL_SECONDS`
-  Override the periodic refresh interval used by the agent.
-
-- `WIFISNITCH_ALLOW_UNAUTHORIZED_NON_SENSITIVE_FIELDS`
-  Allow non-sensitive `network.*` and `auth.*` fields to be returned even when Wi-Fi access is not authorized.
-
-### Defaults
+Default config path:
 
 ```text
-config: ~/.config/wifisnitch/config.toml
+~/.config/wifisnitch/config.toml
+```
+
+The repository includes [config.default.toml](config.default.toml) with every current default value.
+
+Runtime defaults:
+
+```text
 socket: /tmp/wifi-snitch/wifi-snitch.sock
 lock dir: /tmp/wifi-snitch
 log dir: ~/.local/state/wifisnitch
 refresh interval: 60
-allow unauthorized non-sensitive fields: false
+debug logging: false
+file logging: false
+allow unauthorized fields without location: false
 ```
 
-### Example config
+Supported environment variables:
+
+- `WIFISNITCH_CONFIG_PATH`
+- `WIFISNITCH_SOCKET`
+- `WIFISNITCH_LOCK_DIR`
+- `WIFISNITCH_LOGGING_ENABLED`
+- `WIFISNITCH_DEBUG`
+- `WIFISNITCH_LOG_DIR`
+- `WIFISNITCH_REFRESH_INTERVAL_SECONDS`
+- `WIFISNITCH_ALLOW_UNAUTHORIZED_FIELDS_WITHOUT_LOCATION`
+
+Example config:
 
 ```toml
 [logging]
@@ -171,18 +108,18 @@ directory = "~/.local/state/wifisnitch"
 [agent]
 socket_path = "/tmp/wifi-snitch/wifi-snitch.sock"
 refresh_interval_seconds = 60
-allow_unauthorized_non_sensitive_fields = false
+allow_unauthorized_fields_without_location = false
 
 [app]
 lock_dir = "/tmp/wifi-snitch"
 ```
 
-### Examples
+Example overrides:
 
 ```bash
 WIFISNITCH_SOCKET=/path/to/wifi-snitch.sock wifisnitch ping
 WIFISNITCH_CONFIG_PATH=~/.config/wifisnitch/config.toml wifisnitch version
-WIFISNITCH_DEBUG=1 open /Applications/WiFiSnitch.app
+WIFISNITCH_DEBUG=1 open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
 ```
 
 ## Usage
@@ -193,7 +130,7 @@ Show help:
 wifisnitch --help
 ```
 
-Common examples:
+Common commands:
 
 ```bash
 wifisnitch ping
@@ -202,22 +139,14 @@ wifisnitch fields
 wifisnitch formats
 wifisnitch fetch wifi.ssid --format=text
 wifisnitch fetch wifi.ssid,wifi.bssid,wifi.channel --format=lines
-wifisnitch fetch wifi.hardware_address,wifi.interface_mode --format=lines
 wifisnitch fetch network.primary_interface,network.active_tunnel_interface --format=lines
-wifisnitch fetch network.primary_interface_is_tunnel --format=text
 wifisnitch fetch auth.location_authorized,auth.location_permission_state --format=lines
 ```
 
-The default socket path is:
-
-```text
-/tmp/wifi-snitch/wifi-snitch.sock
-```
-
-You can override it with:
+Override the default socket:
 
 ```bash
-WIFISNITCH_SOCKET=/path/to/socket
+WIFISNITCH_SOCKET=/path/to/socket wifisnitch ping
 ```
 
 ## Commands
@@ -230,16 +159,13 @@ Built-in commands:
 - `formats`
 - `fetch`
 
-Field queries use:
-
-- `fetch <field>`
-- `fetch <field1>,<field2>,...`
-
-Formats:
+Supported output formats:
 
 - `text`
 - `json`
 - `lines`
+
+## Fields
 
 Available fields:
 
@@ -278,17 +204,9 @@ Available fields:
 - `auth.location_authorized`
 - `auth.location_permission_state`
 
-## Output shape
+`fetch ... --format=json` returns typed values, not stringified ones. Booleans stay booleans, integers stay integers, and lists stay lists.
 
-`fetch ... --format=json` returns typed JSON values, not stringified ones.
-
-Examples:
-
-- booleans stay booleans
-- integers stay integers
-- DNS and tunnel interface lists stay arrays
-
-Example:
+Example JSON payload:
 
 ```json
 {
@@ -329,184 +247,31 @@ Example:
 }
 ```
 
-Notes:
-
-- `network.active_tunnel_interface` is a convenience field for the primary tunnel-like interface when the primary interface itself looks like a tunnel.
-- `network.active_tunnel_interfaces` contains all currently visible tunnel-like interfaces.
-- `network.internet_reachable` is a cheap reachability hint, not an active probe.
-- `network.captive_portal` is a cheap heuristic, not a captive portal login check.
-- `version` returns a structured version payload from the agent.
-- `fields` lists the field names supported by `fetch`.
-- `formats` lists the supported CLI output formats.
-
 ## Troubleshooting
 
-When something goes wrong, first check whether WiFiSnitch is running once, whether the service is healthy, and whether permission state is what you expect.
-
-### Quick checks
-
-Check the Homebrew service:
+Quick checks:
 
 ```bash
 brew services list | grep wifisnitch
-```
-
-Check running processes:
-
-```bash
 pgrep -fl WiFiSnitch
-pgrep -fl wifisnitch
-```
-
-Check the CLI against the local agent:
-
-```bash
 wifisnitch ping
 wifisnitch version
 ```
 
-If `ping` fails, the agent is probably not running, was blocked by macOS, or never finished startup.
-
-### Logs
-
-WiFiSnitch logs useful startup and permission information.
-
-If file logging is enabled, inspect the configured WiFiSnitch log directory.
-
-If you installed with Homebrew services, also inspect service logs:
+Useful logs:
 
 ```bash
 tail -n 200 ~/Library/Logs/Homebrew/wifisnitch/*.log
 ```
 
-If your machine writes Homebrew logs elsewhere, use `brew services info wifisnitch` to locate them.
+Common cases:
 
-### Common problems and fixes
+- If `wifisnitch ping` fails, the agent is usually not running, was blocked by macOS, or never finished startup.
+- If `wifi.*` fields fail, location permission is usually denied, restricted, or not yet granted.
+- If manual launch works but `brew services` does not, restart the service and compare logs.
+- If two instances are fighting, stop the service, kill manual copies, and start cleanly again.
 
-#### WiFiSnitch is already running
-
-WiFiSnitch uses a single-instance guard. If another instance already holds the startup lock, the second one exits and logs a warning.
-
-Detect duplicates with:
-
-```bash
-pgrep -fl WiFiSnitch
-```
-
-If you accidentally launched both the Homebrew service and a manual instance, stop the extra one and restart cleanly:
-
-```bash
-pkill -x WiFiSnitch || true
-brew services restart wifisnitch
-```
-
-If you are testing local builds, stop the service first so you do not mix manual and service runs.
-
-#### `wifisnitch ping` fails
-
-Check whether the service is actually running:
-
-```bash
-brew services list | grep wifisnitch
-```
-
-Try opening the app directly:
-
-```bash
-open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
-```
-
-Then retry:
-
-```bash
-wifisnitch ping
-```
-
-If the direct app launch works but the service does not, restart the service:
-
-```bash
-brew services restart wifisnitch
-```
-
-#### Permission stays unresolved or Wi-Fi fields are denied
-
-Check the permission state directly:
-
-```bash
-wifisnitch fetch auth.location_authorized --format=text
-wifisnitch fetch auth.location_permission_state --format=text
-```
-
-If the state is not what you expect, reset the permission and relaunch:
-
-```bash
-tccutil reset Location io.github.gi8lino.wifisnitch
-open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
-```
-
-Then allow location access in System Settings and retry your field queries.
-
-#### Wi-Fi-specific fetches fail
-
-That usually means Location Services access is denied, restricted, or not yet granted.
-
-Useful checks:
-
-```bash
-wifisnitch fetch wifi.ssid --format=text
-wifisnitch fetch auth.location_permission_state --format=text
-```
-
-Expected behavior:
-
-- `wifi.*` fields depend on location access
-- `network.*` and `auth.*` fields still work when configured to allow them without Wi-Fi authorization
-
-If you changed permission settings, restart WiFiSnitch:
-
-```bash
-brew services restart wifisnitch
-```
-
-#### Service and manual app launch behave differently
-
-This usually means one of these:
-
-- different WiFiSnitch environment variables
-- duplicate instances
-- stale permission state in an older process
-- quarantine or launch blocking in one path but not the other
-
-Compare the two by:
-
-```bash
-brew services stop wifisnitch
-open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
-wifisnitch ping
-```
-
-If that works, the service path is the issue. Restart the service and inspect logs.
-
-#### Socket or stale process issues
-
-If the app was interrupted or multiple instances were launched, restarting cleanly usually fixes it:
-
-```bash
-brew services stop wifisnitch
-pkill -x WiFiSnitch || true
-brew services start wifisnitch
-```
-
-Then verify:
-
-```bash
-wifisnitch ping
-wifisnitch version
-```
-
-### Reset and recover
-
-A good clean recovery sequence is:
+Clean restart:
 
 ```bash
 brew services stop wifisnitch
@@ -515,9 +280,7 @@ brew services start wifisnitch
 wifisnitch ping
 ```
 
-If permission still looks wrong after that, also reset Location Services permission and relaunch the app once manually.
-
-## Lua example
+## Lua Examples
 
 Show the current Wi-Fi name:
 
@@ -558,40 +321,18 @@ print(values["network.primary_interface_is_tunnel"] or "")
 
 ## Build
 
-Build everything:
-
 ```bash
 swift build
-```
-
-Build optimized binaries:
-
-```bash
 swift build -c release
-```
-
-Package the app bundle and CLI into `dist/`:
-
-```bash
 make bundle
+make run
+make stop
 ```
 
 Run the packaged app:
 
 ```bash
 open dist/WiFiSnitch.app
-```
-
-Or run the local development flow:
-
-```bash
-make run
-```
-
-Stop local and Homebrew-managed instances:
-
-```bash
-make stop
 ```
 
 ## License

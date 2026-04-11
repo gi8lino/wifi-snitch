@@ -1,0 +1,12 @@
+[logging]
+enabled = false # Mirrors stdout and stderr into wifi-snitch.out when true.
+debug = false # Enables debug logging for the app and agent.
+directory = "~/.local/state/wifisnitch" # Directory where WiFiSnitch writes wifi-snitch.out.
+
+[agent]
+socket_path = "/tmp/wifi-snitch/wifi-snitch.sock" # Unix socket path used by WiFiSnitch and the CLI.
+refresh_interval_seconds = 60 # Fallback polling interval for network state. Set to 0 to disable polling.
+allow_unauthorized_fields_without_location = false # When true, non-Wi-Fi fields may still be returned while location permission is denied.
+
+[app]
+lock_dir = "/tmp/wifi-snitch" # Directory that contains the single-instance lock file.

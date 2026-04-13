@@ -95,7 +95,7 @@ let commandRegistry: [CLICommandSpec] = [
   ),
   .init(
     command: .fetch,
-    help: "Fetch selected fields from the network agent",
+    help: "Fetch selected fields or selectors from the agent",
     allowsFormat: true,
     allowsTextFormat: true,
     requiresFieldSpec: true,
@@ -112,7 +112,7 @@ func commandUsageSuffix(for spec: CLICommandSpec) -> String {
   var parts: [String] = []
 
   if spec.requiresFieldSpec {
-    parts.append("<field>[,<field>...]")
+    parts.append("<field|selector>[,<field|selector>...]")
   }
 
   if spec.allowsFormat {
@@ -227,10 +227,24 @@ enum CLI {
         "wifisnitch version",
         "wifisnitch fields",
         "wifisnitch fetch wifi.ssid --format=text",
+        "wifisnitch fetch wifi --format=json",
+        "wifisnitch fetch all --format=json",
         "wifisnitch fetch wifi.ssid,wifi.bssid,wifi.channel --format=lines",
         "wifisnitch fetch network.primary_interface,network.active_tunnel_interface --format=lines",
         "wifisnitch fetch network.active_tunnel_interfaces --format=json",
       ]).map { "  \($0)" }
+      .joined(separator: "\n")
+
+    let selectorLines =
+      ([
+        formatOption("all", "Expand to every supported field")
+      ]
+      + networkAgentFieldNamespaceRegistry.map {
+        formatOption($0.namespace.rawValue, $0.help)
+      } + [
+        formatOption("<namespace>.", "Alias for the bare namespace selector"),
+        formatOption("<namespace>.*", "Alias for the bare namespace selector"),
+      ])
       .joined(separator: "\n")
 
     let fieldLines =
@@ -253,6 +267,9 @@ enum CLI {
 
       fields:
       \(fieldLines)
+
+      selectors:
+      \(selectorLines)
 
       options:
       \(appOptions.map { formatOption(optionText(for: $0), $0.description) }.joined(separator: "\n"))

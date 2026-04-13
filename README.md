@@ -138,6 +138,8 @@ wifisnitch version
 wifisnitch fields
 wifisnitch formats
 wifisnitch fetch wifi.ssid --format=text
+wifisnitch fetch wifi --format=json
+wifisnitch fetch all --format=json
 wifisnitch fetch wifi.ssid,wifi.bssid,wifi.channel --format=lines
 wifisnitch fetch network.primary_interface,network.active_tunnel_interface --format=lines
 wifisnitch fetch auth.location_authorized,auth.location_permission_state --format=lines
@@ -164,6 +166,14 @@ Supported output formats:
 - `text`
 - `json`
 - `lines`
+
+Supported fetch selectors:
+
+- `all`
+- namespaces: `wifi`, `network`, and `auth`
+- aliases: `<namespace>.` and `<namespace>.*`
+
+Bare namespace selectors are the preferred form. The dotted and wildcard aliases expand the same way.
 
 ## Fields
 
@@ -203,6 +213,8 @@ Available fields:
 - `network.captive_portal`
 - `auth.location_authorized`
 - `auth.location_permission_state`
+
+Selectors expand to concrete fields before the request is sent to the agent. Unavailable fields may still be omitted from the response at runtime, for example when Wi-Fi fields are blocked by missing location permission.
 
 `fetch ... --format=json` returns typed values, not stringified ones. Booleans stay booleans, integers stay integers, and lists stay lists.
 

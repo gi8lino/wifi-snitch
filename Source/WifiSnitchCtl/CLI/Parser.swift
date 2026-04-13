@@ -145,17 +145,18 @@ private func validatedFetchArgs(from args: [String], spec: CLICommandSpec) throw
     throw AppError.message("missing field for \(spec.command.rawValue)")
   }
 
-  let fields =
-    try fieldSpec
+  let selectors =
+    fieldSpec
     .split(separator: ",")
     .map(String.init)
     .filter { !$0.isEmpty }
-    .map { raw in
-      guard let field = NetworkAgentField(rawValue: raw) else {
-        throw AppError.message("unknown field: \(raw)")
-      }
-      return field
-    }
+
+  let fields: [NetworkAgentField]
+  do {
+    fields = try expandNetworkAgentFieldSelectors(selectors)
+  } catch let error as NetworkAgentFieldSelectorError {
+    throw AppError.message(error.localizedDescription)
+  }
 
   guard !fields.isEmpty else {
     throw AppError.message("missing field for \(spec.command.rawValue)")

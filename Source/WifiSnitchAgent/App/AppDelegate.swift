@@ -23,26 +23,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NetworkAuthorizationPr
         .path
     )
 
-    let lockPath = defaultSingleInstanceLockPath(
+    switch instanceGuard.acquireLock(
       processName: "wifi-snitch",
       directory: runtimeConfig.lockDirectory
-    )
-
-    switch instanceGuard.acquireLock(at: lockPath) {
+    ) {
     case .acquired:
       break
 
-    case .alreadyRunning:
+    case .alreadyRunning(let lockPath):
       logger.warn("wifi-snitch already running lock_path=\(lockPath)")
-      NSApp.terminate(nil)
-      return
+      terminateApplication()
 
-    case .failed(let reason):
+    case .failed(let lockPath, let reason):
       logger.error(
         "wifi-snitch failed to acquire instance lock lock_path=\(lockPath) reason=\(reason)"
       )
-      NSApp.terminate(nil)
-      return
+      terminateApplication()
     }
 
     let controllerConfig = NetworkAgentControllerConfig(
@@ -64,8 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NetworkAuthorizationPr
 
     NSApp.setActivationPolicy(.accessory)
     guard controller?.start() == true else {
-      NSApp.terminate(nil)
-      return
+      terminateApplication()
     }
   }
 
@@ -91,5 +86,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NetworkAuthorizationPr
 
     let changed = NSApp.setActivationPolicy(.accessory)
     logger.info("wifi-snitch restored accessory mode changed=\(changed)")
+  }
+
+  /// Terminates the application immediately.
+  private func terminateApplication() -> Never {
+    NSApp.terminate(nil)
+    fatalError("Application should have terminated")
   }
 }

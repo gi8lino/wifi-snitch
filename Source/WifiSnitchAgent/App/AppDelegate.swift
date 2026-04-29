@@ -31,12 +31,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NetworkAuthorizationPr
       break
 
     case .alreadyRunning(let lockPath):
-      logger.warn("wifi-snitch already running lock_path=\(lockPath)")
+      logger.warn(
+        "wifi-snitch already running",
+        .field("lock_path", "\(lockPath))"
+      )
       terminateApplication()
 
     case .failed(let lockPath, let reason):
       logger.error(
-        "wifi-snitch failed to acquire instance lock lock_path=\(lockPath) reason=\(reason)"
+        "wifi-snitch failed to acquire instance lock",
+        .field("lock_path", "\(lockPath)"),
+        .field("reason", "\(reason)"),
       )
       terminateApplication()
     }
@@ -75,7 +80,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NetworkAuthorizationPr
     presentedAuthorizationPrompt = true
 
     let changed = NSApp.setActivationPolicy(.regular)
-    logger.info("wifi-snitch promoted for authorization prompt changed=\(changed)")
+    logger.info(
+      "wifi-snitch promoted for authorization prompt",
+      .field("changed", "\(changed)"),
+    )
     NSApp.activate(ignoringOtherApps: true)
   }
 
@@ -85,7 +93,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NetworkAuthorizationPr
     presentedAuthorizationPrompt = false
 
     let changed = NSApp.setActivationPolicy(.accessory)
-    logger.info("wifi-snitch restored accessory mode changed=\(changed)")
+    logger.info(
+      "wifi-snitch restored accessory mode",
+      .field("changed", "\(changed)"),
+    )
   }
 
   /// Terminates the application immediately.

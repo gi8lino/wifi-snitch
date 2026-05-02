@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/gi8lino/easybar.git",
       "state" : {
-        "revision" : "1195a08f98d7d2725a84eb1805e69c59d9e9d6a5",
-        "version" : "0.0.176"
+        "revision" : "60eff90dfe1bdbd8d59b23389d7dba9b13b5e67b",
+        "version" : "0.0.177"
       }
     },
     {

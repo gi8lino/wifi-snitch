@@ -1,15 +1,9 @@
-import EasyBarShared
 import SwiftUI
-import WiFiSnitchShared
 
 struct SettingsView: View {
-  private let runtimeConfig = WiFiSnitchRuntimeConfig.current
-
-  /// Renders the network agent settings summary.
+  /// The agent runs as an accessory process and does not expose
+  /// a user-facing settings window.
   var body: some View {
-    AgentSettingsView(
-      title: "WiFiSnitch Agent",
-      socketPath: runtimeConfig.socketPath
-    )
+    EmptyView()
   }
 }

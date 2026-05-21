@@ -3,7 +3,9 @@
 APP_NAME := WiFiSnitch
 APP_EXEC := WiFiSnitch
 AGENT_PRODUCT := WiFiSnitch
+AGENT_TARGET := WiFiSnitchAgent
 CLI_PRODUCT := wifisnitch
+CLI_TARGET := WiFiSnitch
 
 DIST_DIR := dist
 APP_BUNDLE := $(DIST_DIR)/$(APP_NAME).app
@@ -106,28 +108,28 @@ release: package ## Build and verify the zipped release artifact.
 
 build-agent: ## Internal target: build the app executable for ARCH.
 ifeq ($(ARCH),universal)
-	@$(SWIFT_BUILD_RELEASE) --arch arm64 --product $(AGENT_PRODUCT)
-	@$(SWIFT_BUILD_RELEASE) --arch x86_64 --product $(AGENT_PRODUCT)
+	@$(SWIFT_BUILD_RELEASE) --arch arm64 --target $(AGENT_TARGET)
+	@$(SWIFT_BUILD_RELEASE) --arch x86_64 --target $(AGENT_TARGET)
 	@lipo -create \
-		".build/arm64-apple-macosx/release/$(AGENT_PRODUCT)" \
-		".build/x86_64-apple-macosx/release/$(AGENT_PRODUCT)" \
+		".build/arm64-apple-macosx/release/$(APP_EXEC)" \
+		".build/x86_64-apple-macosx/release/$(APP_EXEC)" \
 		-output "$(APP_BIN)"
 else
-	@$(SWIFT_BUILD_RELEASE) --arch $(ARCH) --product $(AGENT_PRODUCT)
-	@cp ".build/$(ARCH)-apple-macosx/release/$(AGENT_PRODUCT)" "$(APP_BIN)"
+	@$(SWIFT_BUILD_RELEASE) --arch $(ARCH) --target $(AGENT_TARGET)
+	@cp ".build/$(ARCH)-apple-macosx/release/$(APP_EXEC)" "$(APP_BIN)"
 endif
 
 build-cli: ## Internal target: build the CLI executable for ARCH.
 ifeq ($(ARCH),universal)
-	@$(SWIFT_BUILD_RELEASE) --arch arm64 --product $(CLI_PRODUCT)
-	@$(SWIFT_BUILD_RELEASE) --arch x86_64 --product $(CLI_PRODUCT)
+	@$(SWIFT_BUILD_RELEASE) --arch arm64 --target $(CLI_TARGET)
+	@$(SWIFT_BUILD_RELEASE) --arch x86_64 --target $(CLI_TARGET)
 	@lipo -create \
-		".build/arm64-apple-macosx/release/$(CLI_PRODUCT)" \
-		".build/x86_64-apple-macosx/release/$(CLI_PRODUCT)" \
+		".build/arm64-apple-macosx/release/$(CLI_TARGET)" \
+		".build/x86_64-apple-macosx/release/$(CLI_TARGET)" \
 		-output "$(CLI_BIN)"
 else
-	@$(SWIFT_BUILD_RELEASE) --arch $(ARCH) --product $(CLI_PRODUCT)
-	@cp ".build/$(ARCH)-apple-macosx/release/$(CLI_PRODUCT)" "$(CLI_BIN)"
+	@$(SWIFT_BUILD_RELEASE) --arch $(ARCH) --target $(CLI_TARGET)
+	@cp ".build/$(ARCH)-apple-macosx/release/$(CLI_TARGET)" "$(CLI_BIN)"
 endif
 
 icons: ## Generate the app .icns file from the SVG icon.

@@ -2,20 +2,13 @@ import Foundation
 
 /// Central registry of environment variable names used by WiFiSnitch processes.
 ///
-/// This file is the single source of truth for raw environment keys.
-/// Parsing and precedence stay in the runtime config layer.
+/// Environment variables are intentionally limited to bootstrap and diagnostic
+/// concerns. Runtime behavior belongs in `config.toml`; command-specific socket
+/// overrides belong to the CLI `--socket` flag.
 public enum WifiSnitchEnvironmentKeys {
+  /// Overrides the WiFiSnitch config path.
   public static let configPath = "WIFISNITCH_CONFIG_PATH"
 
-  public static let socketPath = "WIFISNITCH_SOCKET"
-
-  public static let lockDirectory = "WIFISNITCH_LOCK_DIR"
-
-  public static let loggingEnabled = "WIFISNITCH_LOGGING_ENABLED"
-  public static let loggingDebugEnabled = "WIFISNITCH_DEBUG"
-  public static let loggingDirectory = "WIFISNITCH_LOG_DIR"
-
-  public static let refreshIntervalSeconds = "WIFISNITCH_REFRESH_INTERVAL_SECONDS"
-  public static let allowUnauthorizedFieldsWithoutLocation =
-    "WIFISNITCH_ALLOW_UNAUTHORIZED_FIELDS_WITHOUT_LOCATION"
+  /// Temporarily overrides the configured minimum log level.
+  public static let loggingLevel = "WIFISNITCH_LOG_LEVEL"
 }

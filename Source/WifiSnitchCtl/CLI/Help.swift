@@ -275,10 +275,11 @@ enum CLI {
       \(appOptions.map { formatOption(optionText(for: $0), $0.description) }.joined(separator: "\n"))
 
       environment:
-      \(formatOption(WifiSnitchEnvironmentKeys.socketPath, "Override WiFiSnitch socket path"))
+      \(formatOption(WifiSnitchEnvironmentKeys.configPath, "Select the WiFiSnitch config file"))
+      \(formatOption(WifiSnitchEnvironmentKeys.loggingLevel, "Temporarily override log verbosity"))
 
-      default socket:
-        \(resolvedWifiSnitchSocketPath())
+      active socket:
+        \(WiFiSnitchRuntimeConfig.current.socketPath)
       """
 
     fputs(help + "\n", stderr)

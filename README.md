@@ -81,28 +81,22 @@ socket: /tmp/wifi-snitch/wifi-snitch.sock
 lock dir: /tmp/wifi-snitch
 log dir: ~/.local/state/wifisnitch
 refresh interval: 60
-debug logging: false
+log level: info
 file logging: false
 allow unauthorized fields without location: false
 ```
 
 Supported environment variables:
 
-- `WIFISNITCH_CONFIG_PATH`
-- `WIFISNITCH_SOCKET`
-- `WIFISNITCH_LOCK_DIR`
-- `WIFISNITCH_LOGGING_ENABLED`
-- `WIFISNITCH_DEBUG`
-- `WIFISNITCH_LOG_DIR`
-- `WIFISNITCH_REFRESH_INTERVAL_SECONDS`
-- `WIFISNITCH_ALLOW_UNAUTHORIZED_FIELDS_WITHOUT_LOCATION`
+- `WIFISNITCH_CONFIG_PATH` selects the config file.
+- `WIFISNITCH_LOG_LEVEL` temporarily overrides log verbosity.
 
 Example config:
 
 ```toml
 [logging]
 enabled = false
-debug = false
+level = "info"
 directory = "~/.local/state/wifisnitch"
 
 [agent]
@@ -117,9 +111,9 @@ lock_dir = "/tmp/wifi-snitch"
 Example overrides:
 
 ```bash
-WIFISNITCH_SOCKET=/path/to/wifi-snitch.sock wifisnitch ping
 WIFISNITCH_CONFIG_PATH=~/.config/wifisnitch/config.toml wifisnitch version
-WIFISNITCH_DEBUG=1 open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
+WIFISNITCH_LOG_LEVEL=debug open "$(brew --prefix)/opt/wifisnitch/libexec/WiFiSnitch.app"
+wifisnitch --socket /path/to/wifi-snitch.sock ping
 ```
 
 ## Usage
@@ -145,10 +139,10 @@ wifisnitch fetch network.primary_interface,network.active_tunnel_interface --for
 wifisnitch fetch auth.location_authorized,auth.location_permission_state --format=lines
 ```
 
-Override the default socket:
+Override the default socket for one CLI command:
 
 ```bash
-WIFISNITCH_SOCKET=/path/to/socket wifisnitch ping
+wifisnitch --socket /path/to/socket ping
 ```
 
 ## Commands
@@ -350,3 +344,4 @@ open dist/WiFiSnitch.app
 ## License
 
 This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
+

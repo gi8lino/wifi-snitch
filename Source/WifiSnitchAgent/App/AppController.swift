@@ -85,7 +85,7 @@ final class AppController: NetworkAuthorizationPromptPresenter {
   /// Configures process logging from the WiFiSnitch runtime config.
   private func configureLogging(runtimeConfig: WiFiSnitchRuntimeConfig) {
     logger.configureRuntimeLogging(
-      minimumLevel: runtimeConfig.loggingDebugEnabled ? .debug : .info,
+      minimumLevel: runtimeConfig.loggingLevel,
       fileLoggingEnabled: runtimeConfig.loggingEnabled,
       fileLoggingPath: URL(fileURLWithPath: runtimeConfig.loggingDirectory)
         .appendingPathComponent("wifi-snitch.out")

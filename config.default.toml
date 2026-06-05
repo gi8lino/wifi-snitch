@@ -1,6 +1,6 @@
 [logging]
 enabled = false # Mirrors stdout and stderr into wifi-snitch.out when true.
-debug = false # Enables debug logging for the app and agent.
+level = "info" # Minimum log level: trace | debug | info | warn | error.
 directory = "~/.local/state/wifisnitch" # Directory where WiFiSnitch writes wifi-snitch.out.
 
 [agent]

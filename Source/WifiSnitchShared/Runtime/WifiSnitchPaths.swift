@@ -14,12 +14,6 @@ public func defaultWifiSnitchConfigPath() -> String {
     .path
 }
 
-/// Returns the resolved socket path used by WiFiSnitch.
-public func resolvedWifiSnitchSocketPath() -> String {
-  expandedEnvironmentPath(named: WifiSnitchEnvironmentKeys.socketPath)
-    ?? defaultWifiSnitchSocketPath()
-}
-
 /// Returns the default Unix socket path used by WiFiSnitch.
 public func defaultWifiSnitchSocketPath() -> String {
   "/tmp/wifi-snitch/wifi-snitch.sock"

@@ -11,10 +11,12 @@ let package = Package(
     .executable(name: "wifisnitch", targets: ["WiFiSnitch"]),
   ],
   dependencies: [
+    .package(url: "https://github.com/gi8lino/easybar", from: "0.30.4"),
     .package(
-      url: "https://github.com/gi8lino/easybar.git", exact: "0.30.3"),
-    .package(
-      url: "https://github.com/gi8lino/SwiftTOMLEdit.git", exact: "0.0.3"),
+      url: "https://github.com/gi8lino/SwiftTOMLEdit.git",
+      exact: "0.0.2"
+    ),
+
   ],
   targets: [
     .target(
@@ -41,6 +43,13 @@ let package = Package(
         .product(name: "EasyBarShared", package: "easybar"),
       ],
       path: "Source/WifiSnitchCtl"
+    ),
+    .testTarget(
+      name: "WiFiSnitchSharedTests",
+      dependencies: [
+        "WiFiSnitchShared"
+      ],
+      path: "Tests/WiFiSnitchSharedTests"
     ),
   ]
 )

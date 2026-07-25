@@ -51,7 +51,7 @@ endif
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all prepare-version build bundle package release agent cli fmt clean clean-dist run dev stop icons \
+.PHONY: help all prepare-version build bundle package release agent cli test fmt clean clean-dist run dev stop icons \
         build-agent build-cli verify verify-release stamp-plist sign \
         print-arch print-version print-latest-tag print-package-sha256 \
         tag-patch tag-minor tag-major push-tags
@@ -76,6 +76,9 @@ agent: prepare-version ## Build only the app executable for the selected ARCH.
 
 cli: prepare-version ## Build only the CLI executable for the selected ARCH.
 	@$(MAKE) --no-print-directory build-cli ARCH=$(ARCH) VERSION=$(VERSION)
+
+test: prepare-version ## Run the Swift package test suite.
+	@swift test
 
 fmt: ## Format all Swift source files in the repository.
 	@swift format format --in-place --recursive --parallel .

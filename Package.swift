@@ -12,15 +12,16 @@ let package = Package(
   ],
   dependencies: [
     .package(
-      url: "https://github.com/gi8lino/easybar.git", exact: "0.30.2"),
-    .package(url: "https://github.com/LebJe/TOMLKit", from: "0.6.0"),
+      url: "https://github.com/gi8lino/easybar.git", exact: "0.30.3"),
+    .package(
+      url: "https://github.com/gi8lino/SwiftTOMLEdit.git", exact: "0.0.1"),
   ],
   targets: [
     .target(
       name: "WiFiSnitchShared",
       dependencies: [
         .product(name: "EasyBarShared", package: "easybar"),
-        .product(name: "TOMLKit", package: "TOMLKit"),
+        .product(name: "SwiftTOMLEdit", package: "swifttomledit"),
       ],
       path: "Source/WifiSnitchShared"
     ),

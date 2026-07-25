@@ -1,6 +1,6 @@
 import EasyBarShared
 import Foundation
-import TOMLKit
+import SwiftTOMLEdit
 
 /// Resolved runtime config used by WiFiSnitch and its CLI.
 public struct WiFiSnitchRuntimeConfig {
@@ -117,7 +117,7 @@ private func normalizedLogLevel(_ value: String?) -> ProcessLogLevel? {
 }
 
 /// Returns one TOML number as a Double.
-private func tomlNumber(_ value: (any TOMLValueConvertible)?) -> Double? {
+private func tomlNumber(_ value: TOMLValue?) -> Double? {
   if let double = value?.double {
     return double
   }

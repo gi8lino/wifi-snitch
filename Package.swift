@@ -13,7 +13,7 @@ let package = Package(
   dependencies: [
     .package(
       url: "https://github.com/gi8lino/easybar",
-      from: "0.39.2",
+      from: "0.40.1",
     ),
     .package(
       url: "https://github.com/gi8lino/SwiftTOMLEdit.git",

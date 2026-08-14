@@ -12,8 +12,8 @@ let package = Package(
   ],
   dependencies: [
     .package(
-      url: "https://github.com/easybar-app/easybar",
-      from: "0.43.0",
+      url: "https://github.com/easybar-app/easybar-kit",
+      from: "0.3.0",
     ),
     .package(
       url: "https://github.com/gi8lino/SwiftTOMLEdit.git",
@@ -25,7 +25,7 @@ let package = Package(
     .target(
       name: "WiFiSnitchShared",
       dependencies: [
-        .product(name: "EasyBarShared", package: "easybar"),
+        .product(name: "EasyBarShared", package: "easybar-kit"),
         .product(name: "SwiftTOMLEdit", package: "swifttomledit"),
       ],
       path: "Source/WifiSnitchShared"
@@ -34,8 +34,8 @@ let package = Package(
       name: "WiFiSnitchAgent",
       dependencies: [
         "WiFiSnitchShared",
-        .product(name: "EasyBarShared", package: "easybar"),
-        .product(name: "EasyBarNetworkAgentCore", package: "easybar"),
+        .product(name: "EasyBarShared", package: "easybar-kit"),
+        .product(name: "EasyBarNetworkAgentCore", package: "easybar-kit"),
       ],
       path: "Source/WifiSnitchAgent"
     ),
@@ -43,7 +43,7 @@ let package = Package(
       name: "WiFiSnitch",
       dependencies: [
         "WiFiSnitchShared",
-        .product(name: "EasyBarShared", package: "easybar"),
+        .product(name: "EasyBarShared", package: "easybar-kit"),
       ],
       path: "Source/WifiSnitchCtl"
     ),

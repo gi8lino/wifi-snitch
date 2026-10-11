@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/gi8lino/SwiftTOMLEdit.git",
       "state" : {
-        "revision" : "d13f32451e73aafb30aeac7a185c86058ba85516",
-        "version" : "0.0.8"
+        "revision" : "4bfa990210191c9f6de233b8c27225046e5198ad",
+        "version" : "0.0.9"
       }
     }
   ],

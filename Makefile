@@ -38,8 +38,9 @@ NEXT_PATCH := $(shell python3 -c 'm,n,p=map(int,"$(CURRENT_VERSION)".split("."))
 NEXT_MINOR := $(shell python3 -c 'm,n,p=map(int,"$(CURRENT_VERSION)".split(".")); print(f"{m}.{n+1}.0")')
 NEXT_MAJOR := $(shell python3 -c 'm,n,p=map(int,"$(CURRENT_VERSION)".split(".")); print(f"{m+1}.0.0")')
 
-SWIFT_BUILD_RELEASE := swift build -c release
-SWIFT_BUILD_DEBUG := swift build -c debug
+# The native planner keeps the case-distinct WiFiSnitch/wifisnitch products separate.
+SWIFT_BUILD_RELEASE := swift build --build-system native -c release
+SWIFT_BUILD_DEBUG := swift build --build-system native -c debug
 
 ifeq ($(ARCH),universal)
 ARCHES := arm64 x86_64
@@ -112,7 +113,7 @@ cli: prepare-version ## Build only the CLI executable for the selected ARCH.
 	@$(MAKE) --no-print-directory build-cli ARCH=$(ARCH) VERSION=$(VERSION)
 
 test: prepare-version ## Run the Swift package test suite.
-	@swift test
+	@swift test --build-system native
 
 fmt: ## Format all Swift source files in the repository.
 	@swift format format --in-place --recursive --parallel .

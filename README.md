@@ -328,8 +328,8 @@ print(values["network.primary_interface_is_tunnel"] or "")
 ## Build
 
 ```bash
-swift build
-swift build -c release
+swift build --build-system native
+swift build --build-system native -c release
 make bundle
 make run
 make stop
